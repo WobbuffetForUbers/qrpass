@@ -10,19 +10,30 @@ interface PageProps {
 export default async function ProfilePage({ params }: PageProps) {
   const { uid } = await params;
 
-  // FETCH FROM FIRESTORE
-  const docRef = doc(db, "users", uid);
-  const docSnap = await getDoc(docRef);
+  let userData: UserProfile | null = null;
 
-  if (!docSnap.exists()) {
-    return notFound();
+  try {
+    // FETCH FROM FIRESTORE
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      return notFound();
+    }
+
+    userData = docSnap.data() as UserProfile;
+  } catch (error) {
+    console.error("Firestore Fetch Error:", error);
+    throw new Error("Failed to load profile data from database. Check Firebase configuration.");
   }
 
-  const userData = docSnap.data() as UserProfile;
+  if (!userData) return notFound();
 
   // THE GATEKEEPER LOGIC:
   // If not premium, force a strict minimal Grayscale theme.
-  const theme: DesignPrefs = userData.isPremium 
+  // Using optional chaining to prevent crashes on malformed docs
+  const isPremium = userData.isPremium === true;
+  const theme: DesignPrefs = isPremium && userData.designPrefs
     ? userData.designPrefs 
     : { theme: 'minimal', accentColor: '#000000' };
 
