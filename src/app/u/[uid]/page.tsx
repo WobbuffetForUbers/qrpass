@@ -43,19 +43,19 @@ export default async function ProfilePage({ params }: PageProps) {
         {/* Profile Identity */}
         <div className="mb-10">
           <h1 className="text-5xl font-extrabold tracking-tight mb-4" style={{ color: theme.accentColor }}>
-            {userData.displayName}
+            {String(userData.displayName || "")}
           </h1>
           <p className="text-xl font-medium opacity-60 leading-relaxed">
-            {userData.bio}
+            {String(userData.bio || "")}
           </p>
         </div>
 
         {/* Links Section */}
         <div className="space-y-4 w-full px-4">
-          {userData.links.map((link, index) => (
+          {(userData.links || []).map((link, index) => (
             <a
               key={index}
-              href={link.url}
+              href={String(link.url || "")}
               target="_blank"
               rel="noopener noreferrer"
               className={`group relative block w-full p-5 rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-lg`}
@@ -65,7 +65,7 @@ export default async function ProfilePage({ params }: PageProps) {
                 color: isBold ? '#FFFFFF' : (isDark ? '#FFFFFF' : theme.accentColor)
               }}
             >
-              {link.label}
+              {String(link.label || "")}
               <span className="absolute right-6 opacity-0 group-hover:opacity-100 transition-opacity">
                 →
               </span>
