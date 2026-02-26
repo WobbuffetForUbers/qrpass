@@ -4,7 +4,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import Link from "next/link";
 import SaveContactButton from "./SaveContactButton";
-import { QRCodeCanvas } from "qrcode.react";
+import ProfileQR from "./ProfileQR";
 
 interface PageProps {
   params: Promise<{ uid: string }>;
@@ -112,17 +112,7 @@ export default async function ProfilePage({ params }: PageProps) {
         </div>
 
         {/* QR Code Section (Requested) */}
-        <div className="mb-16 flex flex-col items-center gap-4">
-           <p className="text-[10px] font-black uppercase tracking-widest opacity-30">Scan to share profile</p>
-           <div className="p-3 bg-white rounded-3xl shadow-xl">
-             <QRCodeCanvas 
-                value={`https://qrpass-nine-zeta.vercel.app/u/${userData.uid}`} 
-                size={120} 
-                level="M" 
-                includeMargin={true} 
-             />
-           </div>
-        </div>
+        <ProfileQR uid={userData.uid} />
 
         {/* Branding/Badge */}
         <div className="pb-12 flex flex-col items-center gap-4">
