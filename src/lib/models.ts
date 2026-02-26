@@ -12,6 +12,10 @@ export interface UserProfile {
   uid: string;
   displayName: string;
   bio: string;
+  jobTitle?: string;
+  company?: string;
+  phone?: string;
+  email?: string;
   links: Link[];
   isPremium: boolean;
   designPrefs: DesignPrefs;

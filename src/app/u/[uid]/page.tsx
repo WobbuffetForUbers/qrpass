@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import Link from "next/link";
+import SaveContactButton from "./SaveContactButton";
+import { QRCodeCanvas } from "qrcode.react";
 
 interface PageProps {
   params: Promise<{ uid: string }>;
@@ -14,7 +16,6 @@ export default async function ProfilePage({ params }: PageProps) {
   let userData: UserProfile | null = null;
 
   try {
-    // FETCH FROM FIRESTORE
     const docRef = doc(db, "users", uid);
     const docSnap = await getDoc(docRef);
 
@@ -25,12 +26,11 @@ export default async function ProfilePage({ params }: PageProps) {
     userData = docSnap.data() as UserProfile;
   } catch (error) {
     console.error("Firestore Fetch Error:", error);
-    throw new Error("Failed to load profile data from database. Check Firebase configuration.");
+    throw new Error("Failed to load profile data.");
   }
 
   if (!userData) return notFound();
 
-  // THE GATEKEEPER LOGIC:
   const isPremium = userData.isPremium === true;
   const theme: DesignPrefs = isPremium && userData.designPrefs
     ? userData.designPrefs 
@@ -53,10 +53,10 @@ export default async function ProfilePage({ params }: PageProps) {
         filter: !isPremium ? 'grayscale(100%)' : 'none'
       }}
     >
-      <div className="max-w-xl w-full mt-16 sm:mt-24 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
-        {/* Profile Avatar Placeholder */}
+      <div className="max-w-xl w-full mt-8 sm:mt-16 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
+        {/* Profile Avatar */}
         <div 
-          className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-8 rounded-[2.5rem] flex items-center justify-center text-4xl sm:text-5xl font-black shadow-2xl transition-transform hover:scale-110 duration-500"
+          className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 rounded-[2.5rem] flex items-center justify-center text-4xl sm:text-5xl font-black shadow-2xl"
           style={{ 
             backgroundColor: isBold ? theme.accentColor : (isDark ? '#1F2937' : '#FFFFFF'),
             color: isBold ? '#FFFFFF' : theme.accentColor,
@@ -67,27 +67,37 @@ export default async function ProfilePage({ params }: PageProps) {
         </div>
 
         {/* Profile Identity */}
-        <div className="mb-12 space-y-4">
+        <div className="mb-8 space-y-2">
           <h1 className="text-4xl sm:text-6xl font-black tracking-tighter leading-none" style={{ color: isBold ? (isDark ? '#FFF' : '#000') : theme.accentColor }}>
             {String(userData.displayName || "Anonymous")}
           </h1>
-          <p className="text-lg sm:text-xl font-medium opacity-50 leading-relaxed max-w-md mx-auto">
-            {String(userData.bio || "No bio yet.")}
+          {(userData.jobTitle || userData.company) && (
+            <p className="text-lg font-bold opacity-60">
+              {userData.jobTitle} {userData.company ? `@ ${userData.company}` : ''}
+            </p>
+          )}
+          <p className="text-md sm:text-lg font-medium opacity-40 leading-relaxed max-w-sm mx-auto">
+            {String(userData.bio || "")}
           </p>
         </div>
 
+        {/* Action Buttons */}
+        <div className="mb-12 flex flex-col gap-3 items-center">
+           <SaveContactButton user={userData} accentColor={theme.accentColor} isBold={isBold} />
+        </div>
+
         {/* Links Section */}
-        <div className="space-y-4 w-full px-2">
+        <div className="space-y-3 w-full px-2 mb-16">
           {(userData.links || []).map((link, index) => (
             <a
               key={index}
               href={formatUrl(String(link.url || "#"))}
               target="_blank"
               rel="noopener noreferrer"
-              className={`group relative block w-full p-6 rounded-[2rem] font-bold text-lg sm:text-xl transition-all duration-500 hover:scale-[1.03] active:scale-95 shadow-xl`}
+              className={`group relative block w-full p-5 rounded-[1.5rem] font-bold text-lg transition-all duration-500 hover:scale-[1.03] active:scale-95 shadow-lg`}
               style={{
                 backgroundColor: isBold ? theme.accentColor : (isDark ? '#1A1A1A' : '#FFFFFF'),
-                border: !isBold ? `2px solid ${isDark ? '#333' : '#EEE'}` : 'none',
+                border: !isBold ? `1px solid ${isDark ? '#333' : '#EEE'}` : 'none',
                 color: isBold ? '#FFFFFF' : (isDark ? '#F3F4F6' : '#111827')
               }}
             >
@@ -101,16 +111,29 @@ export default async function ProfilePage({ params }: PageProps) {
           ))}
         </div>
 
+        {/* QR Code Section (Requested) */}
+        <div className="mb-16 flex flex-col items-center gap-4">
+           <p className="text-[10px] font-black uppercase tracking-widest opacity-30">Scan to share profile</p>
+           <div className="p-3 bg-white rounded-3xl shadow-xl">
+             <QRCodeCanvas 
+                value={`https://qrpass-nine-zeta.vercel.app/u/${userData.uid}`} 
+                size={120} 
+                level="M" 
+                includeMargin={true} 
+             />
+           </div>
+        </div>
+
         {/* Branding/Badge */}
-        <div className="mt-20 flex flex-col items-center gap-4">
+        <div className="pb-12 flex flex-col items-center gap-4">
           {!isPremium ? (
             <div className="px-6 py-2 bg-black/5 rounded-full text-[10px] font-black tracking-[0.2em] uppercase opacity-30">
-              qrPass Free Tier
+              qrPass Card
             </div>
           ) : (
             <div className="flex items-center gap-3 px-6 py-2 bg-white/5 rounded-full shadow-inner">
               <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: theme.accentColor }}></span>
-              <span className="text-[10px] font-black tracking-[0.2em] uppercase opacity-40">Verified Pro</span>
+              <span className="text-[10px] font-black tracking-[0.2em] uppercase opacity-40">Verified Pro Card</span>
             </div>
           )}
           
