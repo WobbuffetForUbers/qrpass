@@ -16,6 +16,7 @@ export interface UserProfile {
   company?: string;
   phone?: string;
   email?: string;
+  avatarUrl?: string;
   links: Link[];
   isPremium: boolean;
   designPrefs: DesignPrefs;

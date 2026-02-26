@@ -61,14 +61,18 @@ export default async function ProfilePage({ params }: PageProps) {
 
         {/* Profile Avatar */}
         <div 
-          className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 rounded-[2.5rem] flex items-center justify-center text-4xl sm:text-5xl font-black shadow-2xl"
+          className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 rounded-[2.5rem] flex items-center justify-center text-4xl sm:text-5xl font-black shadow-2xl overflow-hidden"
           style={{ 
             backgroundColor: isBold ? theme.accentColor : (isDark ? '#1F2937' : '#FFFFFF'),
             color: isBold ? '#FFFFFF' : theme.accentColor,
             border: !isBold ? `4px solid ${theme.accentColor}` : 'none'
           }}
         >
-          {String(userData.displayName || "?").charAt(0)}
+          {userData.avatarUrl ? (
+            <img src={userData.avatarUrl} alt={userData.displayName} className="w-full h-full object-cover" />
+          ) : (
+            String(userData.displayName || "?").charAt(0)
+          )}
         </div>
 
         {/* Profile Identity */}

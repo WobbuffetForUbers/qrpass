@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import { UserProfile, Link as ProfileLink, DesignPrefs } from "@/lib/models";
 import Link from "next/link";
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -41,6 +43,29 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [router]);
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `avatars/${profile.uid}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      
+      setProfile({ ...profile, avatarUrl: url });
+      // Auto-save the avatar URL
+      const docRef = doc(db, "users", profile.uid);
+      await updateDoc(docRef, { avatarUrl: url });
+      
+    } catch (err) {
+      console.error("Upload Error:", err);
+      alert("Failed to upload image.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
@@ -53,6 +78,7 @@ export default function Dashboard() {
         company: profile.company || "",
         phone: profile.phone || "",
         email: profile.email || "",
+        avatarUrl: profile.avatarUrl || "",
         links: profile.links,
         designPrefs: profile.designPrefs,
         isPremium: profile.isPremium
@@ -157,6 +183,36 @@ export default function Dashboard() {
             <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-6">
               <h2 className="font-black text-xl text-gray-400 uppercase tracking-widest text-[10px]">Contact Information</h2>
               
+              {/* Photo Upload Area */}
+              <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-3xl">
+                <div className="relative w-20 h-20 bg-gray-200 rounded-2xl overflow-hidden flex-shrink-0">
+                  {profile.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl font-black text-gray-400">
+                      {profile.displayName.charAt(0)}
+                    </div>
+                  )}
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="block">
+                    <span className="sr-only">Choose profile photo</span>
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-black file:text-white hover:file:bg-gray-800 cursor-pointer"
+                    />
+                  </label>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">JPG, PNG or GIF. Max 5MB.</p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Full Name</label>
