@@ -39,6 +39,11 @@ export default async function ProfilePage({ params }: PageProps) {
   const isDark = theme.theme === 'dark';
   const isBold = theme.theme === 'bold';
 
+  const formatUrl = (url: string) => {
+    if (!url) return "#";
+    return url.startsWith("http") ? url : `https://${url}`;
+  };
+
   return (
     <main 
       className={`min-h-screen flex flex-col items-center p-6 sm:p-12 transition-all duration-1000 font-sans`}
@@ -76,7 +81,7 @@ export default async function ProfilePage({ params }: PageProps) {
           {(userData.links || []).map((link, index) => (
             <a
               key={index}
-              href={String(link.url || "#")}
+              href={formatUrl(String(link.url || "#"))}
               target="_blank"
               rel="noopener noreferrer"
               className={`group relative block w-full p-6 rounded-[2rem] font-bold text-lg sm:text-xl transition-all duration-500 hover:scale-[1.03] active:scale-95 shadow-xl`}
