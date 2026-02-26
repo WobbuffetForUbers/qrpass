@@ -7,8 +7,8 @@ interface Props {
 }
 
 export default function ProfileQR({ uid }: Props) {
-  // Use the permanent production domain to avoid Vercel's preview authentication
-  const publicUrl = `https://qrpass-nine-zeta.vercel.app/u/${uid}`;
+  // Use the current domain dynamically
+  const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${uid}`;
   
   return (
     <div className="mb-16 flex flex-col items-center gap-4">
