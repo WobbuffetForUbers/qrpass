@@ -47,20 +47,42 @@ export default function Dashboard() {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
 
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File is too large. Max 5MB.");
+      return;
+    }
+
     setUploading(true);
+    console.log("Starting upload for:", file.name);
+    
     try {
       const storageRef = ref(storage, `avatars/${profile.uid}`);
-      await uploadBytes(storageRef, file);
+      console.log("Storage Ref created:", storageRef.fullPath);
+      
+      const snapshot = await uploadBytes(storageRef, file);
+      console.log("Upload successful, snapshot:", snapshot);
+      
       const url = await getDownloadURL(storageRef);
+      console.log("Download URL obtained:", url);
       
       setProfile({ ...profile, avatarUrl: url });
-      // Auto-save the avatar URL
+      
+      // Auto-save the avatar URL to Firestore
       const docRef = doc(db, "users", profile.uid);
       await updateDoc(docRef, { avatarUrl: url });
+      console.log("Firestore updated with new avatar URL");
       
-    } catch (err) {
-      console.error("Upload Error:", err);
-      alert("Failed to upload image.");
+    } catch (err: any) {
+      console.error("Full Upload Error Object:", err);
+      let message = "Failed to upload image.";
+      if (err.code === 'storage/unauthorized') {
+        message = "Permission denied. Please check your Firebase Storage Rules.";
+      } else if (err.code === 'storage/canceled') {
+        message = "Upload canceled.";
+      } else if (err.code === 'storage/unknown') {
+        message = "Unknown error. Check if Firebase Storage is enabled in the console.";
+      }
+      alert(`${message} (Error: ${err.code || 'unknown'})`);
     } finally {
       setUploading(false);
     }
