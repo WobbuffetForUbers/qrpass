@@ -56,7 +56,7 @@ export default async function ProfilePage({ params }: PageProps) {
       <div className="max-w-xl w-full mt-8 sm:mt-12 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
         {/* QR Code Section at Top (Requested) */}
         <div className="mb-12">
-          <ProfileQR uid={userData.uid} />
+          <ProfileQR uid={uid} />
         </div>
 
         {/* Profile Avatar */}
