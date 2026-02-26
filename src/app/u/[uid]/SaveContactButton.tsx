@@ -21,8 +21,7 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
       user.bio ? `NOTE:${user.bio}` : "",
       `URL:https://qrpass-nine-zeta.vercel.app/u/${user.uid}`,
       "END:VCARD"
-    ].filter(Boolean).join("
-");
+    ].filter(Boolean).join("\n");
 
     const blob = new Blob([vCard], { type: "text/vcard" });
     const url = window.URL.createObjectURL(blob);
