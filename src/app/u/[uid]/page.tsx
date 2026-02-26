@@ -53,7 +53,12 @@ export default async function ProfilePage({ params }: PageProps) {
         filter: !isPremium ? 'grayscale(100%)' : 'none'
       }}
     >
-      <div className="max-w-xl w-full mt-8 sm:mt-16 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
+      <div className="max-w-xl w-full mt-8 sm:mt-12 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
+        {/* QR Code Section at Top (Requested) */}
+        <div className="mb-12">
+          <ProfileQR uid={userData.uid} />
+        </div>
+
         {/* Profile Avatar */}
         <div 
           className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 rounded-[2.5rem] flex items-center justify-center text-4xl sm:text-5xl font-black shadow-2xl"
@@ -110,9 +115,6 @@ export default async function ProfilePage({ params }: PageProps) {
             </a>
           ))}
         </div>
-
-        {/* QR Code Section (Requested) */}
-        <ProfileQR uid={userData.uid} />
 
         {/* Branding/Badge */}
         <div className="pb-12 flex flex-col items-center gap-4">
