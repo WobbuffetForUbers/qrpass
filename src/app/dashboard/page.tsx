@@ -11,21 +11,31 @@ import Link from "next/link";
 export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setProfile(docSnap.data() as UserProfile);
+      try {
+        if (user) {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            setProfile(docSnap.data() as UserProfile);
+          } else {
+            setError("Profile not found in database. Please try logging in again.");
+          }
+        } else {
+          router.push("/login");
         }
-      } else {
-        router.push("/login");
+      } catch (err: any) {
+        console.error("Dashboard Load Error:", err);
+        setError(err.message || "Failed to connect to the database.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => unsubscribe();
   }, [router]);
@@ -72,6 +82,20 @@ export default function Dashboard() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold">Loading Editor...</div>;
+  
+  if (error) return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-4">
+      <h2 className="text-2xl font-black text-red-600">Dashboard Error</h2>
+      <p className="text-gray-500 max-w-sm">{error}</p>
+      <button 
+        onClick={() => router.push("/login")}
+        className="px-8 py-3 bg-black text-white rounded-2xl font-bold"
+      >
+        Back to Login
+      </button>
+    </div>
+  );
+
   if (!profile) return null;
 
   return (
