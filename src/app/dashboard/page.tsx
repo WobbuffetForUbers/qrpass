@@ -8,7 +8,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import { UserProfile, Link as ProfileLink, DesignPrefs, CVHighlight, QIProject } from "@/lib/models";
 import Link from "next/link";
-import { QRCodeCanvas } from "qrcode.react";
+import ProfileQRCode from "@/components/ProfileQRCode";
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -356,7 +356,7 @@ export default function Dashboard() {
             <section className="bg-[#1A1C1E] text-white p-10 rounded-xl shadow-lg flex flex-col items-center text-center space-y-6">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Distribution QR</p>
               <div className="p-4 bg-white rounded-lg shadow-2xl">
-                <QRCodeCanvas value={publicUrl} size={180} level="H" includeMargin={true} />
+                <ProfileQRCode profileUrl={publicUrl} photoUrl={profile.avatarUrl} size={180} />
               </div>
               <button onClick={handleSave} disabled={saving} className="w-full py-4 bg-blue-600 text-white rounded-lg font-black uppercase tracking-widest text-[10px] hover:bg-blue-700 transition-all shadow-xl">{saving ? 'Syncing...' : 'COMMIT ALL UPDATES'}</button>
             </section>
