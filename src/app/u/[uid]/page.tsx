@@ -128,7 +128,7 @@ export default async function ProfilePage({ params }: PageProps) {
 
   return (
     <main 
-      className={`min-h-screen flex flex-col items-center p-6 sm:p-12 transition-all duration-1000 font-sans`}
+      className={`min-h-screen flex flex-col items-center p-4 sm:p-12 transition-all duration-1000 font-sans antialiased`}
       style={{ 
         backgroundColor: isDark ? '#0A0A0A' : '#F9F9F9',
         color: isDark ? '#F3F4F6' : '#111827',
@@ -136,35 +136,39 @@ export default async function ProfilePage({ params }: PageProps) {
       }}
     >
       <AnalyticsTracker uid={uid} />
-      <div className="max-w-2xl w-full mt-8 sm:mt-12 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
-        {/* QR Code Section at Top */}
-        <div className="mb-12">
-          <ProfileQR uid={uid} avatarUrl={userData.avatarUrl} />
+      
+      <div className="max-w-3xl w-full mt-4 sm:mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
+        
+        {/* Unified Identity Header (QR & Photo) */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
+          {/* Large QR Code */}
+          <div className="flex-shrink-0">
+            <ProfileQR uid={uid} avatarUrl={userData.avatarUrl} size={180} />
+          </div>
+
+          {/* Profile Photo */}
+          <div 
+            className="w-32 h-32 sm:w-40 sm:h-40 rounded-[3rem] flex items-center justify-center text-5xl sm:text-6xl font-black shadow-2xl overflow-hidden border-4 border-white bg-white"
+            style={{ 
+              color: theme.accentColor,
+              borderColor: isDark ? '#1A1A1A' : '#FFFFFF'
+            }}
+          >
+            {userData.avatarUrl ? (
+              <img src={userData.avatarUrl} alt={userData.displayName} className="w-full h-full object-cover" />
+            ) : (
+              String(userData.displayName || "?").charAt(0)
+            )}
+          </div>
         </div>
 
-        {/* Profile Avatar */}
-        <div 
-          className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-6 rounded-[2.5rem] flex items-center justify-center text-4xl sm:text-5xl font-black shadow-2xl overflow-hidden"
-          style={{ 
-            backgroundColor: isBold ? theme.accentColor : (isDark ? '#1F2937' : '#FFFFFF'),
-            color: isBold ? '#FFFFFF' : theme.accentColor,
-            border: !isBold ? `4px solid ${theme.accentColor}` : 'none'
-          }}
-        >
-          {userData.avatarUrl ? (
-            <img src={userData.avatarUrl} alt={userData.displayName} className="w-full h-full object-cover" />
-          ) : (
-            String(userData.displayName || "?").charAt(0)
-          )}
-        </div>
-
-        {/* Profile Identity */}
-        <div className="mb-8 space-y-2">
+        {/* Profile Identity Text */}
+        <div className="text-center space-y-2">
           <h1 className="text-4xl sm:text-6xl font-black tracking-tighter leading-none" style={{ color: isBold ? (isDark ? '#FFF' : '#000') : theme.accentColor }}>
             {String(userData.displayName || "Anonymous")}
           </h1>
           {(userData.jobTitle || userData.company) && (
-            <p className="text-lg font-bold opacity-60">
+            <p className="text-lg font-bold opacity-60 uppercase tracking-widest text-[10px]">
               {userData.jobTitle} {userData.company ? `@ ${userData.company}` : ''}
             </p>
           )}
@@ -174,20 +178,20 @@ export default async function ProfilePage({ params }: PageProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="mb-12 flex flex-col sm:flex-row gap-3 items-center justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
            <SaveContactButton user={userData} accentColor={theme.accentColor} isBold={isBold} />
            {userData.bookingUrl && (
              <a
                href={formatUrl(userData.bookingUrl)}
                target="_blank"
                rel="noopener noreferrer"
-               className="px-10 py-4 rounded-full font-black text-lg transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center gap-2"
+               className="px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center gap-2"
                style={{
                  backgroundColor: isDark ? '#FFFFFF' : '#000000',
                  color: isDark ? '#000000' : '#FFFFFF'
                }}
              >
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                </svg>
                Schedule Meeting
@@ -195,9 +199,9 @@ export default async function ProfilePage({ params }: PageProps) {
            )}
         </div>
 
-        {/* CV Highlights Section */}
-        <div className="mb-16 space-y-6 text-left px-2">
-           <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 text-center mb-6">Core Achievements</h3>
+        {/* Core Achievements Section */}
+        <div className="space-y-6 text-left px-2">
+           <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 text-center">Core Achievements</h3>
            <div className="grid grid-cols-1 gap-4">
              {highlights.map((item, idx) => (
                <a 
@@ -205,7 +209,7 @@ export default async function ProfilePage({ params }: PageProps) {
                  href={formatUrl(item.link)}
                  target="_blank"
                  rel="noopener noreferrer"
-                 className="group p-6 rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500"
+                 className="group p-6 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500"
                  style={{ 
                     backgroundColor: isDark ? '#111' : '#FFF',
                     borderColor: isDark ? '#222' : '#F1F1F1'
@@ -229,8 +233,8 @@ export default async function ProfilePage({ params }: PageProps) {
            </div>
         </div>
 
-        {/* Integration Accordions (Clinical Research & Tech Projects) */}
-        <div className="w-full space-y-4 mb-16 text-left px-2">
+        {/* Integration Accordions */}
+        <div className="w-full space-y-4 text-left px-2">
           {articles.length > 0 && (
             <details className="group bg-white border border-gray-100 rounded-[2rem] overflow-hidden shadow-sm transition-all duration-500" style={{ backgroundColor: isDark ? '#111' : '#FFF', borderColor: isDark ? '#222' : '#F1F1F1' }}>
               <summary className="p-6 cursor-pointer list-none flex justify-between items-center font-black uppercase tracking-widest text-[10px] opacity-50 hover:opacity-100 transition-opacity">
@@ -273,10 +277,10 @@ export default async function ProfilePage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Clinical Integration (QI Projects) Section */}
+        {/* Clinical Integration Portfolio */}
         {userData.showQiProjects && (
-          <div className="mb-16 space-y-8 text-left px-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 text-center mb-6">Clinical Integration Portfolio</h3>
+          <div className="space-y-8 text-left px-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 text-center">Clinical Integration Portfolio</h3>
             <div className="grid grid-cols-1 gap-6">
               {projects.map((project, idx) => (
                 <div 
@@ -320,7 +324,7 @@ export default async function ProfilePage({ params }: PageProps) {
         )}
 
         {/* Links Section */}
-        <div className="space-y-3 w-full px-2 mb-16">
+        <div className="space-y-3 w-full px-2">
           {(userData.links || []).map((link, index) => (
             <a
               key={index}
