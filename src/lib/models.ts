@@ -27,6 +27,7 @@ export interface UserProfile {
   cvHighlights?: CVHighlight[];
   links: Link[];
   isPremium: boolean;
+  viewCount?: number;
   designPrefs: DesignPrefs;
 }
 

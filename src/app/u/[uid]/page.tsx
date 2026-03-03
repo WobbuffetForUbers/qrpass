@@ -5,6 +5,7 @@ import { doc, getDoc } from "firebase/firestore";
 import Link from "next/link";
 import SaveContactButton from "./SaveContactButton";
 import ProfileQR from "./ProfileQR";
+import AnalyticsTracker from "./AnalyticsTracker";
 
 interface PageProps {
   params: Promise<{ uid: string }>;
@@ -74,6 +75,7 @@ export default async function ProfilePage({ params }: PageProps) {
         filter: !isPremium ? 'grayscale(100%)' : 'none'
       }}
     >
+      <AnalyticsTracker uid={uid} />
       <div className="max-w-xl w-full mt-8 sm:mt-12 text-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
         {/* QR Code Section at Top (Requested) */}
         <div className="mb-12">
