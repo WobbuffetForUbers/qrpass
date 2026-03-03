@@ -35,6 +35,8 @@ export interface UserProfile {
   cvHighlights?: CVHighlight[];
   qiProjects?: QIProject[];
   showQiProjects?: boolean;
+  githubUsername?: string;
+  pubmedIds?: string[];
   links: Link[];
   isPremium: boolean;
   viewCount?: number;

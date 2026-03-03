@@ -11,6 +11,52 @@ interface PageProps {
   params: Promise<{ uid: string }>;
 }
 
+async function fetchGitHubRepos(username: string) {
+  try {
+    const res = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=3`, {
+      next: { revalidate: 3600 }
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((repo: any) => ({
+      name: repo.name,
+      description: repo.description,
+      language: repo.language,
+      html_url: repo.html_url
+    }));
+  } catch (error) {
+    console.error("GitHub Fetch Error:", error);
+    return [];
+  }
+}
+
+async function fetchPubMedArticles(pmids: string[]) {
+  if (!pmids || pmids.length === 0) return [];
+  try {
+    const idParam = pmids.join(",");
+    const res = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${idParam}&retmode=json`, {
+      next: { revalidate: 3600 }
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const result = data.result;
+    return pmids.map(id => {
+      const article = result[id];
+      if (!article) return null;
+      return {
+        uid: id,
+        title: article.title,
+        authors: article.authors?.map((a: any) => a.name).join(", "),
+        source: article.source,
+        pubdate: article.pubdate?.split(" ")[0]
+      };
+    }).filter(Boolean);
+  } catch (error) {
+    console.error("PubMed Fetch Error:", error);
+    return [];
+  }
+}
+
 export default async function ProfilePage({ params }: PageProps) {
   const { uid } = await params;
 
@@ -31,6 +77,12 @@ export default async function ProfilePage({ params }: PageProps) {
   }
 
   if (!userData) return notFound();
+
+  // Fetch Live Data
+  const [repos, articles] = await Promise.all([
+    userData.githubUsername ? fetchGitHubRepos(userData.githubUsername) : Promise.resolve([]),
+    userData.pubmedIds ? fetchPubMedArticles(userData.pubmedIds) : Promise.resolve([])
+  ]);
 
   const isPremium = userData.isPremium === true;
   const theme: DesignPrefs = isPremium && userData.designPrefs
@@ -119,6 +171,50 @@ export default async function ProfilePage({ params }: PageProps) {
           <p className="text-md sm:text-lg font-medium opacity-40 leading-relaxed max-w-sm mx-auto">
             {String(userData.bio || "")}
           </p>
+        </div>
+
+        {/* Integration Accordions */}
+        <div className="w-full space-y-4 mb-12 text-left px-2">
+          {articles.length > 0 && (
+            <details className="group bg-white border border-gray-100 rounded-[2rem] overflow-hidden shadow-sm transition-all duration-500" style={{ backgroundColor: isDark ? '#111' : '#FFF', borderColor: isDark ? '#222' : '#F1F1F1' }}>
+              <summary className="p-6 cursor-pointer list-none flex justify-between items-center font-black uppercase tracking-widest text-[10px] opacity-50 hover:opacity-100 transition-opacity">
+                Clinical Research
+                <svg className="w-4 h-4 transition-transform duration-500 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" /></svg>
+              </summary>
+              <div className="px-6 pb-6 space-y-6">
+                {articles.map((article: any, i: number) => (
+                  <a key={i} href={`https://pubmed.ncbi.nlm.nih.gov/${article.uid}`} target="_blank" rel="noopener noreferrer" className="block space-y-1 hover:opacity-70 transition-opacity">
+                    <p className="font-bold text-sm leading-tight">{article.title}</p>
+                    <p className="text-[10px] opacity-50 font-medium italic">{article.authors}</p>
+                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-tighter opacity-40">
+                      <span>{article.source}</span>
+                      <span>{article.pubdate}</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </details>
+          )}
+
+          {repos.length > 0 && (
+            <details className="group bg-white border border-gray-100 rounded-[2rem] overflow-hidden shadow-sm transition-all duration-500" style={{ backgroundColor: isDark ? '#111' : '#FFF', borderColor: isDark ? '#222' : '#F1F1F1' }}>
+              <summary className="p-6 cursor-pointer list-none flex justify-between items-center font-black uppercase tracking-widest text-[10px] opacity-50 hover:opacity-100 transition-opacity">
+                Technical Projects
+                <svg className="w-4 h-4 transition-transform duration-500 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" /></svg>
+              </summary>
+              <div className="px-6 pb-6 space-y-4">
+                {repos.map((repo: any, i: number) => (
+                  <a key={i} href={repo.html_url} target="_blank" rel="noopener noreferrer" className="block p-4 rounded-2xl bg-gray-50/50 hover:bg-gray-50 transition-colors" style={{ backgroundColor: isDark ? '#1A1A1A' : '#F9F9F9' }}>
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="font-bold text-sm">{repo.name}</p>
+                      {repo.language && <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-black/5" style={{ color: theme.accentColor }}>{repo.language}</span>}
+                    </div>
+                    {repo.description && <p className="text-[11px] opacity-50 font-medium leading-snug">{repo.description}</p>}
+                  </a>
+                ))}
+              </div>
+            </details>
+          )}
         </div>
 
         {/* Action Buttons */}

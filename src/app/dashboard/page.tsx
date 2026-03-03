@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pmidString, setPmidString] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -25,7 +26,11 @@ export default function Dashboard() {
           const docRef = doc(db, "users", user.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            setProfile(docSnap.data() as UserProfile);
+            const data = docSnap.data() as UserProfile;
+            setProfile(data);
+            if (data.pubmedIds) {
+              setPmidString(data.pubmedIds.join(", "));
+            }
           } else {
             setError("Profile not found in database.");
           }
@@ -62,6 +67,9 @@ export default function Dashboard() {
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
+    
+    const pubmedIds = pmidString.split(",").map(id => id.trim()).filter(id => id !== "");
+
     try {
       await updateDoc(doc(db, "users", profile.uid), {
         displayName: profile.displayName,
@@ -75,6 +83,8 @@ export default function Dashboard() {
         cvHighlights: profile.cvHighlights || [],
         qiProjects: profile.qiProjects || [],
         showQiProjects: profile.showQiProjects || false,
+        githubUsername: profile.githubUsername || "",
+        pubmedIds: pubmedIds,
         links: profile.links,
         designPrefs: profile.designPrefs,
         isPremium: profile.isPremium
@@ -224,6 +234,48 @@ export default function Dashboard() {
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone</label>
                     <input type="tel" value={profile.phone || ""} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none focus:border-[#1A1C1E]" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Email</label>
+                    <input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none focus:border-[#1A1C1E]" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Scheduling Link (e.g. Calendly)</label>
+                    <input type="text" value={profile.bookingUrl || ""} onChange={(e) => setProfile({...profile, bookingUrl: e.target.value})} placeholder="https://calendly.com/yourname" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none focus:border-[#1A1C1E]" />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Live Data Integrations */}
+            <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5]">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Live API Integrations</h2>
+              </div>
+              <div className="p-8 space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">GitHub Username</label>
+                    <input 
+                      type="text" 
+                      value={profile.githubUsername || ""} 
+                      onChange={(e) => setProfile({...profile, githubUsername: e.target.value})} 
+                      placeholder="e.g. octocat" 
+                      className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none focus:border-[#1A1C1E]" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">PubMed IDs (Comma separated)</label>
+                    <input 
+                      type="text" 
+                      value={pmidString} 
+                      onChange={(e) => setPmidString(e.target.value)} 
+                      placeholder="e.g. 34567890, 12345678" 
+                      className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none focus:border-[#1A1C1E]" 
+                    />
                   </div>
                 </div>
               </div>
