@@ -235,9 +235,15 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email</label>
-                <input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-6 py-4 bg-gray-50 rounded-2xl outline-none font-bold focus:ring-2 ring-black/5" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Email</label>
+                  <input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-6 py-4 bg-gray-50 rounded-2xl outline-none font-bold focus:ring-2 ring-black/5" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Scheduling Link (e.g. Calendly)</label>
+                  <input type="text" value={profile.bookingUrl || ""} onChange={(e) => setProfile({...profile, bookingUrl: e.target.value})} placeholder="https://calendly.com/yourname" className="w-full px-6 py-4 bg-gray-50 rounded-2xl outline-none font-bold focus:ring-2 ring-black/5" />
+                </div>
               </div>
             </div>
 
