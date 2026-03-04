@@ -1,6 +1,11 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, initializeFirestore, terminate } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { 
+  getFirestore, 
+  initializeFirestore, 
+  memoryLocalCache, 
+  persistentMultipleTabManager 
+} from 'firebase/firestore';
+import { getAuth, setPersistence, inMemoryPersistence } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 // Replace with your real Firebase config from the console
@@ -16,9 +21,15 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Initialize Firestore with specific settings to bypass local IO errors if they occur
-const db = getFirestore(app);
+// 1. Force Firestore to use Memory Cache only (Bypasses corrupted IndexedDB)
+const db = initializeFirestore(app, {
+  localCache: memoryLocalCache()
+});
+
+// 2. Force Auth to use Memory Persistence (Bypasses corrupted LocalStorage)
 const auth = getAuth(app);
+setPersistence(auth, inMemoryPersistence);
+
 const storage = getStorage(app);
 
 export { db, auth, storage };
