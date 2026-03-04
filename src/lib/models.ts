@@ -9,6 +9,19 @@ export interface CVHighlight {
   link: string;
 }
 
+export interface Encounter {
+  id: string;
+  scannedUserId?: string;
+  timestamp: Date;
+  location: {
+    lat: number;
+    lng: number;
+    city: string;
+  };
+  contextChips: string[];
+  transcription?: string;
+}
+
 export interface QIProject {
   title: string;
   problem: string;
