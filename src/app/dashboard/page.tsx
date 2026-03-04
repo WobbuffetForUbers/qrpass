@@ -166,9 +166,12 @@ export default function Dashboard() {
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white border border-[#E1E3E5] p-8 rounded-xl shadow-sm">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight text-[#1A1C1E]">OPERATIONS DASHBOARD</h1>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">System Active: {profile.displayName}</p>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">System Active: {profile.displayName}</p>
+              </div>
+              <p className="text-[9px] font-mono text-gray-300">UID: {profile.uid}</p>
             </div>
           </div>
           <div className="flex gap-3">
