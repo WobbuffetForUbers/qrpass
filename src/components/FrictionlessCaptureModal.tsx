@@ -94,7 +94,7 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
     setIsSaving(true);
     try {
       await saveEncounter(user.uid, {
-        scannedUserId,
+        scannedUserId: scannedUserId || null,
         location: context?.location || { lat: 0, lng: 0, city: "Unknown" },
         contextChips: selectedChips,
         transcription: transcript.trim() || undefined,

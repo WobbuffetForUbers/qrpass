@@ -8,19 +8,20 @@ import { Encounter } from "./models";
  */
 export async function saveEncounter(uid: string, encounterData: Omit<Encounter, "id" | "timestamp">) {
   try {
-    const path = `users/${uid}/encounters`;
-    console.log("Attempting to save encounter to:", path, encounterData);
-    
     const encountersRef = collection(db, "users", uid, "encounters");
-    const newDocRef = doc(encountersRef); // Auto-generate ID
+    const newDocRef = doc(encountersRef); 
+    
+    // SANITIZE: Firestore does not accept 'undefined'. Convert to null or remove.
+    const sanitizedData = JSON.parse(JSON.stringify(encounterData, (key, value) => {
+      return value === undefined ? null : value;
+    }));
     
     await setDoc(newDocRef, {
-      ...encounterData,
+      ...sanitizedData,
       id: newDocRef.id,
       timestamp: serverTimestamp(),
     });
     
-    console.log("Encounter saved successfully with ID:", newDocRef.id);
     return newDocRef.id;
   } catch (error: any) {
     console.error("FIRESTORE CRM SAVE ERROR:", error.code, error.message);

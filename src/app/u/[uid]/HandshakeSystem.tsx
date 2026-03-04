@@ -31,6 +31,7 @@ export default function HandshakeSystem({ ownerUid }: Props) {
           contactName: "Anonymous Scan",
           timestamp: serverTimestamp(),
           isDraft: true,
+          scannedUserId: null,
           location: { city: "Remote Scan" }
         });
         console.log("Ghost Scan successful, ID:", docRef.id);
