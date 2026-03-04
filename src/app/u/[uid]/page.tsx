@@ -6,6 +6,7 @@ import Link from "next/link";
 import SaveContactButton from "./SaveContactButton";
 import ProfileQR from "./ProfileQR";
 import AnalyticsTracker from "./AnalyticsTracker";
+import HandshakeSystem from "./HandshakeSystem";
 
 interface PageProps {
   params: Promise<{ uid: string }>;
@@ -176,6 +177,9 @@ export default async function ProfilePage({ params }: PageProps) {
             {String(userData.bio || "")}
           </p>
         </div>
+
+        {/* Two-Way Handshake System */}
+        <HandshakeSystem ownerUid={uid} />
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
