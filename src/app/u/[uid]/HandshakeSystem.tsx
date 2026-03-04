@@ -24,17 +24,19 @@ export default function HandshakeSystem({ ownerUid }: Props) {
 
     const performGhostScan = async () => {
       try {
+        console.log("Attempting Ghost Scan for owner:", ownerUid);
         const encountersRef = collection(db, "users", ownerUid, "encounters");
         const docRef = await addDoc(encountersRef, {
           type: "ghost_scan",
           contactName: "Anonymous Scan",
           timestamp: serverTimestamp(),
           isDraft: true,
-          location: { city: "Remote Scan" } // Fallback since we don't prompt for GPS here
+          location: { city: "Remote Scan" }
         });
+        console.log("Ghost Scan successful, ID:", docRef.id);
         setEncounterId(docRef.id);
-      } catch (error) {
-        console.error("Ghost Scan Error:", error);
+      } catch (error: any) {
+        console.error("GHOST SCAN ERROR:", error.code, error.message);
       }
     };
 
