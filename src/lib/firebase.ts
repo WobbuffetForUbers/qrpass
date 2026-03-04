@@ -26,9 +26,8 @@ const db = initializeFirestore(app, {
   localCache: memoryLocalCache()
 });
 
-// 2. Force Auth to use Memory Persistence (Bypasses corrupted LocalStorage)
+// 2. Allow Auth to use default browser persistence (so refreshes work)
 const auth = getAuth(app);
-setPersistence(auth, inMemoryPersistence);
 
 const storage = getStorage(app);
 
