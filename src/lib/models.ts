@@ -47,6 +47,14 @@ export interface QIProject {
   result: string;
 }
 
+export interface HackathonProject {
+  title: string;
+  problem: string;
+  techStack: string[];
+  outcome: string;
+  link?: string;
+}
+
 export interface DesignPrefs {
   theme: 'minimal' | 'bold' | 'dark';
   accentColor: string;
@@ -64,10 +72,12 @@ export interface UserProfile {
   bookingUrl?: string;
   cvHighlights?: CVHighlight[];
   qiProjects?: QIProject[];
+  hackathonProjects?: HackathonProject[];
   showQiProjects?: boolean;
   showCvHighlights?: boolean;
   showPublications?: boolean;
   showGitHub?: boolean;
+  showHackathons?: boolean;
   githubUsername?: string;
   pubmedIds?: string[];
   doiIds?: string[];

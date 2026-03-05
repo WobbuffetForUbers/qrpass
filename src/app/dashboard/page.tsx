@@ -6,7 +6,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
-import { UserProfile, Link as ProfileLink, DesignPrefs, CVHighlight, QIProject } from "@/lib/models";
+import { UserProfile, Link as ProfileLink, DesignPrefs, CVHighlight, QIProject, HackathonProject } from "@/lib/models";
 import Link from "next/link";
 import ProfileQRCode from "@/components/ProfileQRCode";
 import EncountersDashboard from "@/components/EncountersDashboard";
@@ -99,10 +99,12 @@ export default function Dashboard() {
         bookingUrl: profile.bookingUrl || "",
         cvHighlights: profile.cvHighlights || [],
         qiProjects: profile.qiProjects || [],
+        hackathonProjects: profile.hackathonProjects || [],
         showQiProjects: profile.showQiProjects || false,
         showCvHighlights: profile.showCvHighlights || false,
         showPublications: profile.showPublications || false,
         showGitHub: profile.showGitHub || false,
+        showHackathons: profile.showHackathons || false,
         githubUsername: profile.githubUsername || "",
         pubmedIds: pubmedIds,
         doiIds: doiIds,
@@ -115,21 +117,21 @@ export default function Dashboard() {
     finally { setSaving(false); }
   };
 
-  const togglePremium = async () => {
-    if (!profile) return;
-    const newStatus = !profile.isPremium;
-    setProfile({ ...profile, isPremium: newStatus });
-    try {
-      await updateDoc(doc(db, "users", profile.uid), { isPremium: newStatus });
-    } catch (e) {}
-  };
-
   const toggleField = async (field: keyof UserProfile) => {
     if (!profile) return;
     const newStatus = !profile[field];
     setProfile({ ...profile, [field]: newStatus });
     try {
       await updateDoc(doc(db, "users", profile.uid), { [field]: newStatus });
+    } catch (e) {}
+  };
+
+  const togglePremium = async () => {
+    if (!profile) return;
+    const newStatus = !profile.isPremium;
+    setProfile({ ...profile, isPremium: newStatus });
+    try {
+      await updateDoc(doc(db, "users", profile.uid), { isPremium: newStatus });
     } catch (e) {}
   };
 
@@ -178,12 +180,32 @@ export default function Dashboard() {
     setProfile({ ...profile, qiProjects: newP });
   };
 
+  const addHackathon = () => {
+    if (!profile) return;
+    const current = profile.hackathonProjects || [];
+    if (current.length >= 3) return;
+    setProfile({ ...profile, hackathonProjects: [...current, { title: "", problem: "", techStack: [], outcome: "" }] });
+  };
+
+  const updateHackathon = (index: number, field: keyof HackathonProject, value: any) => {
+    if (!profile || !profile.hackathonProjects) return;
+    const newH = [...profile.hackathonProjects];
+    newH[index] = { ...newH[index], [field]: value };
+    setProfile({ ...profile, hackathonProjects: newH });
+  };
+
+  const removeHackathon = (index: number) => {
+    if (!profile || !profile.hackathonProjects) return;
+    const newH = profile.hackathonProjects.filter((_, i) => i !== index);
+    setProfile({ ...profile, hackathonProjects: newH });
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center font-black uppercase tracking-widest text-xs bg-white text-black">Initializing Session...</div>;
   if (!profile) return null;
 
   const publicUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile.uid}`;
 
-  const renderToggle = (field: keyof UserProfile, label: string) => (
+  const renderToggle = (field: keyof UserProfile) => (
     <div className="flex items-center gap-3">
       <div onClick={() => toggleField(field)} className={`w-8 h-4 rounded-full relative cursor-pointer transition-colors ${profile[field] ? 'bg-green-500' : 'bg-gray-300'}`}>
         <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${profile[field] ? 'left-[1.15rem]' : 'left-0.5'}`}></div>
@@ -235,8 +257,9 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-black">
               <div className="lg:col-span-2 space-y-8">
+                {/* Identity Section */}
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5]"><h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Identity & Credentials</h2></div>
                   <div className="p-8 space-y-8">
@@ -250,53 +273,71 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Full Name</label><input type="text" value={profile.displayName} onChange={(e) => setProfile({...profile, displayName: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Clinical/Job Title</label><input type="text" value={profile.jobTitle || ""} onChange={(e) => setProfile({...profile, jobTitle: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Organization</label><input type="text" value={profile.company || ""} onChange={(e) => setProfile({...profile, company: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone</label><input type="tel" value={profile.phone || ""} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Full Name</label><input type="text" value={profile.displayName} onChange={(e) => setProfile({...profile, displayName: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Clinical/Job Title</label><input type="text" value={profile.jobTitle || ""} onChange={(e) => setProfile({...profile, jobTitle: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Organization</label><input type="text" value={profile.company || ""} onChange={(e) => setProfile({...profile, company: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Phone</label><input type="tel" value={profile.phone || ""} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Email</label><input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Scheduling Link</label><input type="text" value={profile.bookingUrl || ""} onChange={(e) => setProfile({...profile, bookingUrl: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Email</label><input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Scheduling Link</label><input type="text" value={profile.bookingUrl || ""} onChange={(e) => setProfile({...profile, bookingUrl: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
                     </div>
                   </div>
                 </section>
 
-                <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm text-black">
+                {/* API Integrations */}
+                <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center">
                     <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Live API Integrations</h2>
                     <div className="flex gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[8px] font-black uppercase text-gray-400">GitHub</span>
-                        {renderToggle('showGitHub', 'GitHub')}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[8px] font-black uppercase text-gray-400">PubMed/DOI</span>
-                        {renderToggle('showPublications', 'Research')}
-                      </div>
+                      <div className="flex items-center gap-2"><span className="text-[8px] font-black uppercase text-gray-400">GitHub</span>{renderToggle('showGitHub')}</div>
+                      <div className="flex items-center gap-2"><span className="text-[8px] font-black uppercase text-gray-400">Research</span>{renderToggle('showPublications')}</div>
                     </div>
                   </div>
                   <div className="p-8 space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                      <input type="text" value={profile.githubUsername || ""} onChange={(e) => setProfile({...profile, githubUsername: e.target.value})} placeholder="GitHub Username" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
-                      <input type="text" value={pmidString} onChange={(e) => setPmidString(e.target.value)} placeholder="PubMed IDs" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
-                      <input type="text" value={doiString} onChange={(e) => setDoiString(e.target.value)} placeholder="DOI IDs" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
+                      <input type="text" value={profile.githubUsername || ""} onChange={(e) => setProfile({...profile, githubUsername: e.target.value})} placeholder="GitHub Username" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" />
+                      <input type="text" value={pmidString} onChange={(e) => setPmidString(e.target.value)} placeholder="PubMed IDs" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" />
+                      <input type="text" value={doiString} onChange={(e) => setDoiString(e.target.value)} placeholder="DOI IDs" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" />
                     </div>
                   </div>
                 </section>
 
-                <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm text-black">
+                {/* Hackathon Gallery */}
+                <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
+                  <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Hackathon & Pitch Deck Gallery</h2>
+                      {renderToggle('showHackathons')}
+                    </div>
+                    {(profile.hackathonProjects || []).length < 3 && <button onClick={addHackathon} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ New Pitch</button>}
+                  </div>
+                  <div className="p-8 space-y-8">
+                    {(profile.hackathonProjects || []).map((h, i) => (
+                      <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group">
+                        <button onClick={() => removeHackathon(i)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        <input placeholder="Project/Pitch Title" value={h.title} onChange={(e) => updateHackathon(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" />
+                        <textarea placeholder="Problem Statement" value={h.problem} onChange={(e) => updateHackathon(i, 'problem', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm outline-none resize-none" rows={2} />
+                        <input placeholder="Tech Stack (Python, SQL, Java...)" value={h.techStack.join(", ")} onChange={(e) => updateHackathon(i, 'techStack', e.target.value.split(",").map((s: string) => s.trim()))} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm outline-none" />
+                        <textarea placeholder="Outcome / Impact" value={h.outcome} onChange={(e) => updateHackathon(i, 'outcome', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm outline-none resize-none" rows={2} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* QI Portfolio */}
+                <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center">
                     <div className="flex items-center gap-4">
                       <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">QI Portfolio (A3/PDSA)</h2>
-                      {renderToggle('showQiProjects', 'QI')}
+                      {renderToggle('showQiProjects')}
                     </div>
                     {(profile.qiProjects || []).length < 3 && <button onClick={addQIProject} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ New A3 Record</button>}
                   </div>
                   <div className="p-8 space-y-8">
                     {(profile.qiProjects || []).map((p, i) => (
                       <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group">
-                        <button onClick={() => removeQIProject(i)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        <button onClick={() => removeQIProject(i)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                         <input placeholder="Project Title" value={p.title} onChange={(e) => updateQIProject(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <textarea placeholder="The Problem" value={p.problem} onChange={(e) => updateQIProject(i, 'problem', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm outline-none resize-none" rows={2} />
@@ -309,18 +350,19 @@ export default function Dashboard() {
                   </div>
                 </section>
 
-                <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm text-black">
+                {/* Core Achievements */}
+                <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center">
                     <div className="flex items-center gap-4">
                       <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Core Achievements</h2>
-                      {renderToggle('showCvHighlights', 'Highlights')}
+                      {renderToggle('showCvHighlights')}
                     </div>
                     {(profile.cvHighlights || []).length < 3 && <button onClick={addCVHighlight} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ Add Record</button>}
                   </div>
                   <div className="p-8 space-y-6">
                     {(profile.cvHighlights || []).map((h, i) => (
                       <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group">
-                        <button onClick={() => removeCVHighlight(i)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        <button onClick={() => removeCVHighlight(i)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                         <input placeholder="Title" value={h.title} onChange={(e) => updateCVHighlight(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" />
                         <textarea placeholder="Description" value={h.description} onChange={(e) => updateCVHighlight(i, 'description', e.target.value)} className="w-full bg-transparent text-sm text-gray-500 outline-none resize-none" rows={2} />
                         <input placeholder="Evidence Link" value={h.link} onChange={(e) => updateCVHighlight(i, 'link', e.target.value)} className="w-full bg-transparent text-xs text-blue-500 font-bold outline-none" />
@@ -330,6 +372,7 @@ export default function Dashboard() {
                 </section>
               </div>
 
+              {/* Sidebar */}
               <div className="space-y-8">
                 <section className="bg-[#1A1C1E] text-white p-10 rounded-xl shadow-lg flex flex-col items-center text-center space-y-6">
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50">Distribution QR</p>
