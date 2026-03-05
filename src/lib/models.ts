@@ -100,7 +100,8 @@ export const MOCK_USER_FREE: UserProfile = {
   isPremium: false,
   designPrefs: {
     theme: 'dark', // Should be ignored by Gatekeeper
-    accentColor: '#FF5733' // Should be ignored by Gatekeeper
+    accentColor: '#FF5733', // Should be ignored by Gatekeeper
+    font: 'sans'
   }
 };
 
@@ -115,6 +116,7 @@ export const MOCK_USER_PREMIUM: UserProfile = {
   isPremium: true,
   designPrefs: {
     theme: 'dark',
-    accentColor: '#3B82F6' // Blue accent
+    accentColor: '#3B82F6', // Blue accent
+    font: 'sans'
   }
 };
