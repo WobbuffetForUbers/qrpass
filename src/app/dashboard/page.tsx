@@ -115,6 +115,15 @@ export default function Dashboard() {
     finally { setSaving(false); }
   };
 
+  const togglePremium = async () => {
+    if (!profile) return;
+    const newStatus = !profile.isPremium;
+    setProfile({ ...profile, isPremium: newStatus });
+    try {
+      await updateDoc(doc(db, "users", profile.uid), { isPremium: newStatus });
+    } catch (e) {}
+  };
+
   const toggleField = async (field: keyof UserProfile) => {
     if (!profile) return;
     const newStatus = !profile[field];
