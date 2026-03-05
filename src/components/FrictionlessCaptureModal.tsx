@@ -19,6 +19,7 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [loopClosureDate, setLoopClosureDate] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const recognitionRef = useRef<any>(null);
@@ -51,10 +52,7 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
         for (let i = event.resultIndex; i < event.results.length; i++) {
           currentTranscript += event.results[i][0].transcript;
         }
-        setTranscript(prev => {
-          // If we're ending a result, we'll append. This is a simplified real-time view.
-          return currentTranscript; 
-        });
+        setTranscript(currentTranscript);
       };
 
       recognition.onend = () => {
@@ -75,7 +73,7 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
       recognitionRef.current?.stop();
       setIsListening(false);
     } else {
-      setTranscript(""); // Clear previous for new session
+      setTranscript(""); 
       recognitionRef.current?.start();
       setIsListening(true);
     }
@@ -98,11 +96,12 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
         location: context?.location || { lat: 0, lng: 0, city: "Unknown" },
         contextChips: selectedChips,
         transcription: transcript.trim() || undefined,
+        loopClosureDate: loopClosureDate ? new Date(loopClosureDate) : null,
       });
       onClose();
-      // Reset state
       setSelectedChips([]);
       setTranscript("");
+      setLoopClosureDate("");
       setContext(null);
     } catch (err) {
       alert("Failed to save encounter.");
@@ -118,7 +117,7 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
       <div className="bg-white w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
         
         {/* Header: Ambient Status */}
-        <div className="bg-gray-50 p-8 border-b border-gray-100 flex justify-between items-start">
+        <div className="bg-gray-50 p-8 border-b border-gray-100 flex justify-between items-start text-black">
           <div className="space-y-1">
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Context Captured</h3>
             <div className="flex items-center gap-2">
@@ -136,9 +135,9 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
           </button>
         </div>
 
-        <div className="p-8 space-y-8">
+        <div className="p-8 space-y-6 text-black">
           {/* Quick Chips */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Quick Context</p>
             <div className="flex flex-wrap gap-2">
               {DEFAULT_CHIPS.map(chip => (
@@ -157,15 +156,14 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
             </div>
           </div>
 
-          {/* Voice Input (Web Speech API) */}
-          <div className="space-y-4 text-center">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Voice Dictation (Native)</p>
-            <div className="flex flex-col items-center gap-4">
+          {/* Voice Input */}
+          <div className="space-y-3 text-center">
+            <div className="flex flex-col items-center gap-3">
               <button
                 onClick={toggleListening}
-                className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
+                className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
                   isListening 
-                  ? 'bg-red-500 scale-110 shadow-[0_0_30px_rgba(239,68,68,0.5)]' 
+                  ? 'bg-red-500 scale-110 shadow-[0_0_20px_rgba(239,68,68,0.4)]' 
                   : 'bg-black shadow-xl hover:scale-105'
                 }`}
               >
@@ -176,32 +174,36 @@ export default function FrictionlessCaptureModal({ isOpen, onClose, scannedUserI
                     <span className="w-1 h-4 bg-white animate-pulse delay-150"></span>
                   </div>
                 ) : (
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                 )}
               </button>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                {isListening ? "Listening... Tap to Stop" : "Tap to Dictate Notes"}
-              </p>
-            </div>
-
-            {/* Real-time Transcription Area */}
-            <div className="mt-4">
               <textarea
                 value={transcript}
                 onChange={(e) => setTranscript(e.target.value)}
-                placeholder="Spoken notes will appear here..."
-                className="w-full p-6 bg-gray-50 rounded-[2rem] border-2 border-transparent focus:border-blue-100 outline-none text-xs font-medium leading-relaxed italic resize-none min-h-[100px] transition-all"
+                placeholder="Tap mic to dictate notes..."
+                className="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-blue-100 outline-none text-xs font-medium leading-relaxed italic resize-none min-h-[80px]"
               />
             </div>
+          </div>
+
+          {/* Loop Closure Reminder */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Close the Loop Reminder</label>
+            <input 
+              type="date" 
+              value={loopClosureDate}
+              onChange={(e) => setLoopClosureDate(e.target.value)}
+              className="w-full px-5 py-3 bg-gray-50 rounded-xl outline-none font-bold text-sm focus:ring-2 ring-black/5"
+            />
           </div>
 
           {/* Save Button */}
           <button
             onClick={handleSave}
             disabled={isSaving || capturingContext}
-            className="w-full py-5 bg-black text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-xl disabled:bg-gray-200"
+            className="w-full py-4 bg-black text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-xl disabled:bg-gray-200"
           >
-            {isSaving ? "Archiving Record..." : "Confirm & Save Encounter"}
+            {isSaving ? "Archiving..." : "Save Encounter"}
           </button>
         </div>
       </div>

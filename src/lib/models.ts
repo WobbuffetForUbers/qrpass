@@ -24,6 +24,7 @@ export interface Encounter {
   };
   contextChips: string[];
   transcription?: string;
+  loopClosureDate?: Date | null;
 }
 
 export interface ConnectionProfile {
