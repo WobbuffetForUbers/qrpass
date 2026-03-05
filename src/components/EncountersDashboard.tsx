@@ -92,22 +92,31 @@ export default function EncountersDashboard({ uid }: Props) {
     <div key={encounter.id} className={`p-8 hover:bg-gray-50 transition-colors group ${encounter.loopClosureDate && encounter.loopClosureDate < now ? 'border-l-4 border-orange-500 bg-orange-50/30' : ''}`}>
       {editingId === encounter.id ? (
         <div className="space-y-4 animate-in slide-in-from-left-2 duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-black">
-            <input value={editData.contactName || ""} onChange={(e) => setEditData({...editData, contactName: e.target.value})} placeholder="Contact Name" className="w-full px-4 py-2 bg-white border border-gray-200 rounded font-bold text-sm" />
-            <input value={editData.contactInfo || ""} onChange={(e) => setEditData({...editData, contactInfo: e.target.value})} placeholder="Email/LinkedIn" className="w-full px-4 py-2 bg-white border border-gray-200 rounded font-bold text-sm" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-black text-left">
+            <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">Full Name</label><input value={editData.contactName || ""} onChange={(e) => setEditData({...editData, contactName: e.target.value})} className="w-full px-4 py-2 bg-white border border-gray-200 rounded font-bold text-sm" /></div>
+            <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">Email</label><input value={editData.contactEmail || ""} onChange={(e) => setEditData({...editData, contactEmail: e.target.value})} className="w-full px-4 py-2 bg-white border border-gray-200 rounded font-bold text-sm" /></div>
+            <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">Phone</label><input value={editData.contactPhone || ""} onChange={(e) => setEditData({...editData, contactPhone: e.target.value})} className="w-full px-4 py-2 bg-white border border-gray-200 rounded font-bold text-sm" /></div>
+            <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">LinkedIn/Other</label><input value={editData.contactOther || ""} onChange={(e) => setEditData({...editData, contactOther: e.target.value})} className="w-full px-4 py-2 bg-white border border-gray-200 rounded font-bold text-sm" /></div>
           </div>
-          <div className="space-y-1 text-black">
-            <label className="text-[9px] font-black uppercase text-gray-400 ml-1">Follow-up Reminder</label>
+          <div className="space-y-1 text-black text-left">
+            <label className="text-[8px] font-black uppercase text-gray-400">Reason for Connecting</label>
+            <textarea value={editData.reason || ""} onChange={(e) => setEditData({...editData, reason: e.target.value})} className="w-full px-4 py-2 bg-white border border-gray-200 rounded text-sm min-h-[60px] resize-none" />
+          </div>
+          <div className="space-y-1 text-black text-left">
+            <label className="text-[8px] font-black uppercase text-gray-400">Follow-up Reminder</label>
             <input type="date" value={editData.loopClosureDate || ""} onChange={(e) => setEditData({...editData, loopClosureDate: e.target.value})} className="w-full px-4 py-2 bg-white border border-gray-200 rounded text-sm font-bold" />
           </div>
-          <textarea value={editData.transcription || ""} onChange={(e) => setEditData({...editData, transcription: e.target.value})} placeholder="Notes/Transcription" className="w-full px-4 py-2 bg-white border border-gray-200 rounded text-sm min-h-[80px] resize-none text-black" />
+          <div className="space-y-1 text-black text-left">
+            <label className="text-[8px] font-black uppercase text-gray-400">General Notes</label>
+            <textarea value={editData.transcription || ""} onChange={(e) => setEditData({...editData, transcription: e.target.value})} placeholder="Notes/Transcription" className="w-full px-4 py-2 bg-white border border-gray-200 rounded text-sm min-h-[80px] resize-none" />
+          </div>
           <div className="flex gap-2">
             <button onClick={handleUpdate} className="px-4 py-2 bg-black text-white rounded text-[10px] font-black uppercase tracking-widest">Save Changes</button>
             <button onClick={() => setEditingId(null)} className="px-4 py-2 bg-gray-100 text-gray-400 rounded text-[10px] font-black uppercase tracking-widest">Cancel</button>
           </div>
         </div>
       ) : (
-        <div className="space-y-4 text-black">
+        <div className="space-y-4 text-black text-left">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
@@ -117,7 +126,12 @@ export default function EncountersDashboard({ uid }: Props) {
                 {encounter.loopClosureDate && encounter.loopClosureDate < now && <span className="px-2 py-0.5 bg-orange-500 text-white rounded text-[8px] font-black uppercase tracking-widest animate-pulse">ACTION REQUIRED</span>}
               </div>
               <h3 className="text-lg font-bold text-[#1A1C1E]">{encounter.contactName || (encounter.location?.city || "Anonymous Scan")}</h3>
-              {encounter.contactInfo && <p className="text-xs font-bold text-blue-600 lowercase tracking-tight">{encounter.contactInfo}</p>}
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {encounter.contactEmail && <p className="text-[10px] font-bold text-blue-600 lowercase">{encounter.contactEmail}</p>}
+                {encounter.contactPhone && <p className="text-[10px] font-bold text-gray-500">{encounter.contactPhone}</p>}
+                {encounter.contactOther && <p className="text-[10px] font-bold text-gray-400">{encounter.contactOther}</p>}
+              </div>
+              {encounter.reason && <p className="text-xs font-medium text-gray-600 mt-2 border-l-2 border-gray-100 pl-3 py-1 bg-gray-50/50 rounded-r-lg">Reason: {encounter.reason}</p>}
               {encounter.loopClosureDate && (
                 <p className={`text-[9px] font-black uppercase tracking-tighter ${encounter.loopClosureDate < now ? 'text-orange-600' : 'text-gray-400'}`}>
                   Loop Closure: {encounter.loopClosureDate.toLocaleDateString()}
@@ -146,7 +160,7 @@ export default function EncountersDashboard({ uid }: Props) {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex justify-between items-center bg-white border border-[#E1E3E5] p-8 rounded-xl shadow-sm text-black">
-        <div>
+        <div className="text-left">
           <h2 className="text-xl font-bold tracking-tight uppercase">Relationship Manager</h2>
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Archives & Interaction Intelligence</p>
         </div>
@@ -162,7 +176,6 @@ export default function EncountersDashboard({ uid }: Props) {
         </div>
       ) : (
         <div className="space-y-10">
-          {/* Needs Follow-Up Section */}
           {needsFollowUp.length > 0 && (
             <div className="bg-white border border-orange-100 rounded-xl overflow-hidden shadow-md">
               <div className="bg-orange-50 px-8 py-4 border-b border-orange-100 flex items-center gap-3">
@@ -175,9 +188,8 @@ export default function EncountersDashboard({ uid }: Props) {
             </div>
           )}
 
-          {/* OK Section */}
           <div className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
-            <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5]">
+            <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] text-left">
               <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Activity Ledger</h2>
             </div>
             <div className="divide-y divide-gray-50">

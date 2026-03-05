@@ -20,7 +20,11 @@ export interface Encounter {
   scannedUserId?: string | null;
   connectionProfileId?: string | null;
   contactName?: string;
-  contactInfo?: string;
+  contactInfo?: string; // Legacy/General
+  contactEmail?: string;
+  contactPhone?: string;
+  contactOther?: string;
+  reason?: string;
   timestamp: Date;
   location: {
     lat: number;

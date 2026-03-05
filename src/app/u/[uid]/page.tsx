@@ -204,7 +204,7 @@ export default async function ProfilePage({ params }: PageProps) {
           </p>
         </div>
 
-        <HandshakeSystem ownerUid={uid} />
+        <HandshakeSystem ownerUid={uid} bookingUrl={userData.bookingUrl} />
 
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
            <SaveContactButton user={userData} accentColor={theme.accentColor} isBold={isBold} />
