@@ -79,6 +79,20 @@ export async function linkEncounterToProfile(uid: string, encounterId: string, p
 }
 
 /**
+ * Deletes an encounter from the user's private CRM.
+ */
+export async function deleteEncounter(uid: string, encounterId: string) {
+  try {
+    const docRef = doc(db, "users", uid, "encounters", encounterId);
+    await deleteDoc(docRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting encounter:", error);
+    throw error;
+  }
+}
+
+/**
  * Deletes a master connection profile.
  */
 export async function deleteConnection(uid: string, profileId: string) {

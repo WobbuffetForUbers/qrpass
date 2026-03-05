@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp } from "firebase/firestore";
 import { Encounter } from "@/lib/models";
-import { updateEncounter } from "@/lib/crm";
+import { updateEncounter, deleteEncounter } from "@/lib/crm";
 import FrictionlessCaptureModal from "./FrictionlessCaptureModal";
 import IdentifyEncounterModal from "./IdentifyEncounterModal";
 
@@ -63,6 +63,14 @@ export default function EncountersDashboard({ uid }: Props) {
     } catch (e) { alert("Update failed."); }
   };
 
+  const handleDeleteRecord = async (id: string) => {
+    if (!confirm("Confirm removal of this activity record?")) return;
+    try {
+      await deleteEncounter(uid, id);
+      fetchEncounters();
+    } catch (e) { alert("Delete failed."); }
+  };
+
   const openIdentify = (encounter: any) => {
     setSelectedEncounter(encounter);
     setIsIdentifyModalOpen(true);
@@ -88,9 +96,9 @@ export default function EncountersDashboard({ uid }: Props) {
             <input value={editData.contactName || ""} onChange={(e) => setEditData({...editData, contactName: e.target.value})} placeholder="Contact Name" className="w-full px-4 py-2 bg-white border border-gray-200 rounded font-bold text-sm" />
             <input value={editData.contactInfo || ""} onChange={(e) => setEditData({...editData, contactInfo: e.target.value})} placeholder="Email/LinkedIn" className="w-full px-4 py-2 bg-white border border-gray-200 rounded font-bold text-sm" />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1 text-black">
             <label className="text-[9px] font-black uppercase text-gray-400 ml-1">Follow-up Reminder</label>
-            <input type="date" value={editData.loopClosureDate || ""} onChange={(e) => setEditData({...editData, loopClosureDate: e.target.value})} className="w-full px-4 py-2 bg-white border border-gray-200 rounded text-sm font-bold text-black" />
+            <input type="date" value={editData.loopClosureDate || ""} onChange={(e) => setEditData({...editData, loopClosureDate: e.target.value})} className="w-full px-4 py-2 bg-white border border-gray-200 rounded text-sm font-bold" />
           </div>
           <textarea value={editData.transcription || ""} onChange={(e) => setEditData({...editData, transcription: e.target.value})} placeholder="Notes/Transcription" className="w-full px-4 py-2 bg-white border border-gray-200 rounded text-sm min-h-[80px] resize-none text-black" />
           <div className="flex gap-2">
@@ -125,6 +133,7 @@ export default function EncountersDashboard({ uid }: Props) {
                   <button onClick={() => openIdentify(encounter)} className="px-3 py-1 bg-white border border-[#E1E3E5] hover:border-black rounded text-[9px] font-black uppercase tracking-widest transition-all opacity-0 group-hover:opacity-100">Identify & Profile</button>
                 )}
                 <button onClick={() => startEdit(encounter)} className="p-2 text-gray-300 hover:text-black opacity-0 group-hover:opacity-100 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
+                <button onClick={() => handleDeleteRecord(encounter.id)} className="p-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
               </div>
             </div>
           </div>
