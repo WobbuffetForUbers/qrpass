@@ -222,7 +222,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="flex bg-white border border-[#E1E3E5] p-1 rounded-xl w-full max-w-xl">
+        <div className="flex bg-white border border-[#E1E3E5] p-1 rounded-xl w-full max-w-xl mx-auto sm:mx-0">
           <button onClick={() => setActiveTab('editor')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'editor' ? 'bg-[#1A1C1E] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>Editor</button>
           <button onClick={() => setActiveTab('encounters')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'encounters' ? 'bg-[#1A1C1E] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>Activity Ledger</button>
           <button onClick={() => setActiveTab('connections')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-lg transition-all ${activeTab === 'connections' ? 'bg-[#1A1C1E] text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}>Intel Rolodex</button>
@@ -231,7 +231,7 @@ export default function Dashboard() {
         {activeTab === 'editor' && (
           <div className="space-y-10 animate-in fade-in duration-700">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8 text-black">
+              <div className="lg:col-span-2 space-y-8 text-black text-left">
                 {/* Identity */}
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] font-black uppercase text-[10px] tracking-widest text-gray-500">Identity & Credentials</div>
@@ -244,9 +244,25 @@ export default function Dashboard() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Full Name</label><input type="text" value={profile.displayName} onChange={(e) => setProfile({...profile, displayName: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Job Title</label><input type="text" value={profile.jobTitle || ""} onChange={(e) => setProfile({...profile, jobTitle: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Organization</label><input type="text" value={profile.company || ""} onChange={(e) => setProfile({...profile, company: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Phone</label><input type="tel" value={profile.phone || ""} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Job Title</label><input type="text" value={profile.jobTitle || ""} onChange={(e) => setProfile({...profile, jobTitle: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Organization</label><input type="text" value={profile.company || ""} onChange={(e) => setProfile({...profile, company: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Phone</label><input type="tel" value={profile.phone || ""} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Short Bio</label>
+                      <textarea 
+                        value={profile.bio} 
+                        rows={3} 
+                        onChange={(e) => setProfile({...profile, bio: e.target.value})} 
+                        className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none resize-none"
+                        placeholder="Tell the world who you are..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Email Address</label><input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Scheduling Link</label><input type="text" value={profile.bookingUrl || ""} onChange={(e) => setProfile({...profile, bookingUrl: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
                     </div>
                   </div>
                 </section>
@@ -306,7 +322,7 @@ export default function Dashboard() {
                   <button onClick={handleSave} disabled={saving} className="w-full py-4 bg-blue-600 text-white rounded-lg font-black uppercase tracking-widest text-[10px] hover:bg-blue-700 transition-all shadow-xl">{saving ? 'Syncing...' : 'COMMIT ALL UPDATES'}</button>
                 </section>
 
-                <section className="bg-white border border-[#E1E3E5] p-8 rounded-xl shadow-sm space-y-8">
+                <section className="bg-white border border-[#E1E3E5] p-8 rounded-xl shadow-sm space-y-8 text-left">
                   <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Visual Interface</h2>
                   
                   {/* Color Presets */}
