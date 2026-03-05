@@ -137,6 +137,13 @@ export default async function ProfilePage({ params }: PageProps) {
   const isDark = theme.theme === 'dark';
   const isBold = theme.theme === 'bold';
 
+  const fontClass = {
+    sans: 'font-sans',
+    serif: 'font-serif',
+    mono: 'font-mono',
+    display: 'font-black tracking-tight' // Custom display style
+  }[theme.font || 'sans'];
+
   const formatUrl = (url: string) => {
     if (!url) return "#";
     return url.startsWith("http") ? url : `https://${url}`;
@@ -148,7 +155,7 @@ export default async function ProfilePage({ params }: PageProps) {
 
   return (
     <main 
-      className={`min-h-screen flex flex-col items-center p-4 sm:p-12 transition-all duration-1000 font-sans antialiased`}
+      className={`min-h-screen flex flex-col items-center p-4 sm:p-12 transition-all duration-1000 ${fontClass} antialiased`}
       style={{ 
         backgroundColor: isDark ? '#0A0A0A' : '#F9F9F9',
         color: isDark ? '#F3F4F6' : '#111827',

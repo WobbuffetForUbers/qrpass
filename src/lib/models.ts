@@ -58,6 +58,7 @@ export interface HackathonProject {
 export interface DesignPrefs {
   theme: 'minimal' | 'bold' | 'dark';
   accentColor: string;
+  font: 'sans' | 'serif' | 'mono' | 'display';
 }
 
 export interface UserProfile {
