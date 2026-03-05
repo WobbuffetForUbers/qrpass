@@ -152,6 +152,7 @@ export default async function ProfilePage({ params }: PageProps) {
   const highlights = userData.cvHighlights || [];
   const projects = userData.qiProjects || [];
   const hackathons = userData.hackathonProjects || [];
+  const roles = (userData.roles && userData.roles.length > 0) ? userData.roles : [{ jobTitle: userData.jobTitle || "", company: userData.company || "" }];
 
   return (
     <main 
@@ -167,7 +168,7 @@ export default async function ProfilePage({ params }: PageProps) {
       <div className="max-w-3xl w-full mt-4 sm:mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out">
         
         {/* Unified Identity Header (QR & Photo) */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12 text-black">
           <div className="flex-shrink-0">
             <ProfileQR uid={uid} avatarUrl={userData.avatarUrl} size={180} />
           </div>
@@ -187,15 +188,17 @@ export default async function ProfilePage({ params }: PageProps) {
         </div>
 
         {/* Profile Identity Text */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2 text-black">
           <h1 className="text-4xl sm:text-6xl font-black tracking-tighter leading-none" style={{ color: isBold ? (isDark ? '#FFF' : '#000') : theme.accentColor }}>
             {String(userData.displayName || "Anonymous")}
           </h1>
-          {(userData.jobTitle || userData.company) && (
-            <p className="text-lg font-bold opacity-60 uppercase tracking-widest text-[10px]">
-              {userData.jobTitle} {userData.company ? `@ ${userData.company}` : ''}
-            </p>
-          )}
+          <div className="flex flex-col items-center gap-1">
+            {roles.filter(r => r.jobTitle || r.company).map((role, idx) => (
+              <p key={idx} className="text-lg font-bold opacity-60 uppercase tracking-widest text-[10px]">
+                {role.jobTitle} {role.company ? `@ ${role.company}` : ''}
+              </p>
+            ))}
+          </div>
           <p className="text-md sm:text-lg font-medium opacity-40 leading-relaxed max-w-sm mx-auto">
             {String(userData.bio || "")}
           </p>
@@ -263,7 +266,7 @@ export default async function ProfilePage({ params }: PageProps) {
         {/* Innovation Gallery (Hackathons) */}
         {userData.showHackathons && hackathons.length > 0 && (
           <div className="space-y-6 text-left px-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 text-center">Innovation Gallery</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 text-center text-black">Innovation Gallery</h3>
             <div className="grid grid-cols-1 gap-6">
               {hackathons.map((pitch, idx) => (
                 <div 
@@ -347,7 +350,7 @@ export default async function ProfilePage({ params }: PageProps) {
         {/* Clinical Integration Portfolio */}
         {userData.showQiProjects && projects.length > 0 && (
           <div className="space-y-8 text-left px-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 text-center">Clinical Integration Portfolio</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 text-center text-black">Clinical Integration Portfolio</h3>
             <div className="grid grid-cols-1 gap-6 text-black">
               {projects.map((project, idx) => (
                 <div 
@@ -390,7 +393,7 @@ export default async function ProfilePage({ params }: PageProps) {
           </div>
         )}
 
-        <div className="space-y-3 w-full px-2">
+        <div className="space-y-3 w-full px-2 text-black">
           {(userData.links || []).map((link, index) => (
             <a
               key={index}

@@ -6,7 +6,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
-import { UserProfile, Link as ProfileLink, DesignPrefs, CVHighlight, QIProject, HackathonProject } from "@/lib/models";
+import { UserProfile, Link as ProfileLink, DesignPrefs, CVHighlight, QIProject, HackathonProject, Role } from "@/lib/models";
 import Link from "next/link";
 import ProfileQRCode from "@/components/ProfileQRCode";
 import EncountersDashboard from "@/components/EncountersDashboard";
@@ -123,6 +123,24 @@ export default function Dashboard() {
     setProfile({ ...profile, designPrefs: { ...profile.designPrefs, [field]: value } });
   };
 
+  const addRole = () => {
+    if (!profile) return;
+    const current = profile.roles || [];
+    setProfile({ ...profile, roles: [...current, { jobTitle: "", company: "" }] });
+  };
+
+  const updateRole = (index: number, field: keyof Role, value: string) => {
+    if (!profile || !profile.roles) return;
+    const newRoles = [...profile.roles];
+    newRoles[index] = { ...newRoles[index], [field]: value };
+    setProfile({ ...profile, roles: newRoles });
+  };
+
+  const removeRole = (index: number) => {
+    if (!profile || !profile.roles) return;
+    setProfile({ ...profile, roles: profile.roles.filter((_, i) => i !== index) });
+  };
+
   const addCVHighlight = () => {
     if (!profile) return;
     const current = profile.cvHighlights || [];
@@ -209,7 +227,7 @@ export default function Dashboard() {
   );
 
   return (
-    <main className="min-h-screen bg-[#F8F9FA] text-[#1A1C1E] p-4 sm:p-10 font-sans antialiased">
+    <main className="min-h-screen bg-[#F8F9FA] text-[#1A1C1E] p-4 sm:p-10 font-sans antialiased text-left">
       <div className="max-w-7xl mx-auto space-y-10">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white border border-[#E1E3E5] p-8 rounded-xl shadow-sm">
           <div className="space-y-1">
@@ -231,38 +249,50 @@ export default function Dashboard() {
         {activeTab === 'editor' && (
           <div className="space-y-10 animate-in fade-in duration-700">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8 text-black text-left">
+              <div className="lg:col-span-2 space-y-8 text-black">
                 {/* Identity */}
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] font-black uppercase text-[10px] tracking-widest text-gray-500">Identity & Credentials</div>
                   <div className="p-8 space-y-8">
-                    <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-8 border-b border-gray-50 pb-8">
                       <div className="relative w-28 h-28 bg-[#F1F3F5] rounded-xl overflow-hidden border-2 border-white shadow-md">
                         {profile.avatarUrl ? <img src={profile.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-gray-200">{profile.displayName.charAt(0)}</div>}
                       </div>
                       <input type="file" accept="image/*" onChange={handleImageUpload} className="block text-[10px] font-black uppercase file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-[#1A1C1E] file:text-white cursor-pointer" />
                     </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Full Name</label><input type="text" value={profile.displayName} onChange={(e) => setProfile({...profile, displayName: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Job Title</label><input type="text" value={profile.jobTitle || ""} onChange={(e) => setProfile({...profile, jobTitle: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Organization</label><input type="text" value={profile.company || ""} onChange={(e) => setProfile({...profile, company: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Phone</label><input type="tel" value={profile.phone || ""} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Primary Phone</label><input type="tel" value={profile.phone || ""} onChange={(e) => setProfile({...profile, phone: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center"><label className="text-[10px] font-black uppercase text-gray-400">Professional Roles (Hats)</label><button onClick={addRole} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ Add Role</button></div>
+                      <div className="space-y-4">
+                        {(profile.roles || []).map((role, idx) => (
+                          <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#F8F9FA] p-4 rounded-xl relative group">
+                            <button onClick={() => removeRole(idx)} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">×</button>
+                            <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">Job Title</label><input type="text" value={role.jobTitle} onChange={(e) => updateRole(idx, 'jobTitle', e.target.value)} placeholder="e.g. CEO" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold" /></div>
+                            <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">Organization</label><input type="text" value={role.company} onChange={(e) => updateRole(idx, 'company', e.target.value)} placeholder="e.g. Hospital Group" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold" /></div>
+                          </div>
+                        ))}
+                        {(profile.roles || []).length === 0 && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Legacy Job Title</label><input type="text" value={profile.jobTitle || ""} onChange={(e) => setProfile({...profile, jobTitle: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                            <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Legacy Organization</label><input type="text" value={profile.company || ""} onChange={(e) => setProfile({...profile, company: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Short Bio</label>
-                      <textarea 
-                        value={profile.bio} 
-                        rows={3} 
-                        onChange={(e) => setProfile({...profile, bio: e.target.value})} 
-                        className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none resize-none"
-                        placeholder="Tell the world who you are..."
-                      />
+                      <label className="text-[10px] font-black uppercase text-gray-400 ml-1">Professional Summary / Bio</label>
+                      <textarea value={profile.bio} rows={5} onChange={(e) => setProfile({...profile, bio: e.target.value})} className="w-full px-4 py-4 bg-[#F8F9FA] border border-[#E1E3E5] rounded-xl font-medium text-sm focus:outline-none resize-none leading-relaxed" placeholder="Detailed professional bio..." />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Email Address</label><input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
-                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Scheduling Link</label><input type="text" value={profile.bookingUrl || ""} onChange={(e) => setProfile({...profile, bookingUrl: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Direct Email</label><input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
+                      <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Meeting Link</label><input type="text" value={profile.bookingUrl || ""} onChange={(e) => setProfile({...profile, bookingUrl: e.target.value})} placeholder="Calendly/Zoom link" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
                     </div>
                   </div>
                 </section>
@@ -279,7 +309,7 @@ export default function Dashboard() {
                         <button onClick={() => removeHackathon(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                         <input placeholder="Project/Pitch Title" value={h.title} onChange={(e) => updateHackathon(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" />
                         <textarea placeholder="Problem Statement" value={h.problem} onChange={(e) => updateHackathon(i, 'problem', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none" rows={2} />
-                        <div className="space-y-2">
+                        <div className="space-y-2 text-left">
                           <div className="flex justify-between items-center"><label className="text-[9px] font-black uppercase text-gray-400">Tech Stack</label><button onClick={() => addTechChip(i)} className="text-[9px] font-black text-blue-600">+ Add</button></div>
                           <div className="flex flex-wrap gap-2">
                             {h.techStack.map((tech, tIdx) => (
@@ -324,8 +354,6 @@ export default function Dashboard() {
 
                 <section className="bg-white border border-[#E1E3E5] p-8 rounded-xl shadow-sm space-y-8 text-left">
                   <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Visual Interface</h2>
-                  
-                  {/* Color Presets */}
                   <div className="space-y-3">
                     <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">Color Palette</label>
                     <div className="grid grid-cols-3 gap-2">
@@ -338,19 +366,14 @@ export default function Dashboard() {
                       <input type="text" value={profile.designPrefs.accentColor} onChange={(e) => updateDesign('accentColor', e.target.value)} className="flex-1 bg-gray-50 px-3 py-1 rounded text-[10px] font-mono border border-gray-100" />
                     </div>
                   </div>
-
-                  {/* Font Selection */}
                   <div className="space-y-3">
                     <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">Typography</label>
                     <div className="grid grid-cols-2 gap-2">
                       {['sans', 'serif', 'mono', 'display'].map(f => (
-                        <button key={f} onClick={() => updateDesign('font', f as any)} className={`py-2 rounded-lg border-2 text-[10px] font-bold capitalize transition-all ${profile.designPrefs.font === f ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-400 border-transparent hover:border-gray-200'}`}>
-                          {f}
-                        </button>
+                        <button key={f} onClick={() => updateDesign('font', f as any)} className={`py-2 rounded-lg border-2 text-[10px] font-bold capitalize transition-all ${profile.designPrefs.font === f ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-400 border-transparent hover:border-gray-200'}`}>{f}</button>
                       ))}
                     </div>
                   </div>
-
                   <div className="space-y-2 pt-4 border-t border-gray-50">
                     <select disabled={!profile.isPremium} value={profile.designPrefs.theme} onChange={(e) => updateDesign('theme', e.target.value)} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-[10px] uppercase appearance-none">
                       <option value="minimal">Minimalist</option><option value="bold">High Contrast</option><option value="dark">Midnight</option>

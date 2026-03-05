@@ -9,6 +9,11 @@ export interface CVHighlight {
   link: string;
 }
 
+export interface Role {
+  jobTitle: string;
+  company: string;
+}
+
 export interface Encounter {
   id: string;
   type?: 'ghost_scan' | 'handshake' | 'manual';
@@ -65,6 +70,7 @@ export interface UserProfile {
   uid: string;
   displayName: string;
   bio: string;
+  roles?: Role[];
   jobTitle?: string;
   company?: string;
   phone?: string;
