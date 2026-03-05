@@ -77,7 +77,17 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
       photoBase64 = await imageUrlToBase64(user.avatarUrl);
     }
 
-    const vCard = [
+    // Helper to fold long lines (Required for some vCard parsers, especially iOS)
+    const foldLine = (line: string) => {
+      const MAX_LENGTH = 75;
+      let result = "";
+      for (let i = 0; i < line.length; i += MAX_LENGTH) {
+        result += line.substring(i, i + MAX_LENGTH) + "\r\n ";
+      }
+      return result.trim();
+    };
+
+    const vCardLines = [
       "BEGIN:VCARD",
       "VERSION:3.0",
       `FN:${user.displayName}`,
@@ -88,11 +98,16 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
       user.email ? `EMAIL;TYPE=INTERNET:${user.email}` : "",
       user.bio ? `NOTE:${user.bio}` : "",
       `URL:https://qrpass-nine-zeta.vercel.app/u/${user.uid}`,
-      photoBase64 ? `PHOTO;ENCODING=b;TYPE=JPEG:${photoBase64}` : "",
-      "END:VCARD"
-    ].filter(Boolean).join("\n");
+    ];
 
-    const blob = new Blob([vCard], { type: "text/vcard" });
+    if (photoBase64) {
+      // iOS expects the photo line to be formatted very specifically with Base64 encoding
+      vCardLines.push(`PHOTO;TYPE=JPEG;ENCODING=b:${photoBase64.replace(/\s/g, "")}`);
+    }
+
+    vCardLines.push("END:VCARD");
+
+    const blob = new Blob([vCardLines.join("\n")], { type: "text/vcard" });
     const url = window.URL.createObjectURL(blob);
     const link = document.body.appendChild(document.createElement("a"));
     link.href = url;
