@@ -53,6 +53,7 @@ export default function ConnectionsDashboard({ uid }: Props) {
 
   const fetchAllEncounters = async () => {
     try {
+      console.log("Refreshing encounter cache for loop status...");
       const q = query(collection(db, "users", uid, "encounters"));
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map(doc => ({
@@ -65,7 +66,9 @@ export default function ConnectionsDashboard({ uid }: Props) {
     } catch (e) { console.error("Error fetching all encounters:", e); }
   };
 
-  const viewDetails = (conn: ConnectionProfile) => {
+  const viewDetails = async (conn: ConnectionProfile) => {
+    // Re-fetch all encounters before viewing details to ensure latest loop dates are present
+    await fetchAllEncounters();
     setSelectedConn(conn);
     setEditData({ ...conn });
     const linked = allEncounters.filter(e => e.connectionProfileId === conn.id);
@@ -96,8 +99,14 @@ export default function ConnectionsDashboard({ uid }: Props) {
   const now = new Date();
   const connectionsWithStatus = connections.map(conn => {
     const encounters = allEncounters.filter(e => e.connectionProfileId === conn.id);
-    const hasPendingLoop = encounters.some(e => e.loopClosureDate && e.loopClosureDate < now);
-    return { ...conn, hasPendingLoop };
+    // Any encounter that has a loop date set is considered "Pending" until handled
+    const pendingEncounters = encounters.filter(e => e.loopClosureDate);
+    const hasPendingLoop = pendingEncounters.length > 0;
+    const earliestLoopDate = pendingEncounters.length > 0 
+      ? new Date(Math.min(...pendingEncounters.map(e => e.loopClosureDate!.getTime())))
+      : null;
+    
+    return { ...conn, hasPendingLoop, earliestLoopDate };
   });
 
   const needsAttention = connectionsWithStatus.filter(c => c.hasPendingLoop);
@@ -106,13 +115,22 @@ export default function ConnectionsDashboard({ uid }: Props) {
   const renderConnectionCard = (conn: any) => (
     <div key={conn.id} onClick={() => viewDetails(conn)} className="bg-white border border-[#E1E3E5] p-6 rounded-xl shadow-sm hover:shadow-md transition-all group relative overflow-hidden cursor-pointer">
       <div className={`absolute top-0 left-0 w-1 h-full transition-opacity ${conn.hasPendingLoop ? 'bg-orange-500 opacity-100' : 'bg-blue-500 opacity-20 group-hover:opacity-100'}`}></div>
-      <div className="space-y-4">
-        <div className="space-y-1 text-black">
+      <div className="space-y-4 text-black">
+        <div className="space-y-1">
           <div className="flex justify-between items-start">
             <h3 className="font-bold text-lg">{conn.name}</h3>
-            {conn.hasPendingLoop && <span className="px-2 py-0.5 bg-orange-500 text-white rounded text-[7px] font-black uppercase animate-pulse">Action Required</span>}
+            {conn.hasPendingLoop && (
+              <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase ${conn.earliestLoopDate < now ? 'bg-red-500 text-white animate-pulse' : 'bg-orange-100 text-orange-700'}`}>
+                {conn.earliestLoopDate < now ? 'Overdue' : 'Upcoming'}
+              </span>
+            )}
           </div>
           {conn.company && <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{conn.jobTitle} @ {conn.company}</p>}
+          {conn.hasPendingLoop && (
+            <p className="text-[9px] font-bold text-orange-600 mt-1">
+              Loop Deadline: {conn.earliestLoopDate.toLocaleDateString()}
+            </p>
+          )}
         </div>
         <div className="pt-4 border-t border-gray-50 flex justify-between items-center">
           <div className="space-y-0.5 text-black">
