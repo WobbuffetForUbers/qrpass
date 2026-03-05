@@ -47,15 +47,26 @@ export default function IdentifyEncounterModal({ isOpen, onClose, uid, encounter
     setIsProcessing(true);
     try {
       await linkEncounterToProfile(uid, encounter.id, profileId);
-      // Update contact details if they are missing in the profile but present in the handshake
+      
       const existing = connections.find(c => c.id === profileId);
       if (existing) {
         const updates: any = { id: profileId };
+        
+        // Update contact details if they are missing in the profile but present in the handshake
         if (!existing.email && encounter.contactEmail) updates.email = encounter.contactEmail;
-        // Merge notes if there's a reason
-        if (encounter.reason) {
-          updates.notes = (existing.notes || "") + `\n\n[Handshake Reason]: ${encounter.reason}`;
+        if (!existing.phone && encounter.contactPhone) updates.phone = encounter.contactPhone;
+        
+        // Handle LinkedIn/Other logic
+        const handshakeLinkedIn = encounter.contactOther || (encounter.contactInfo?.includes("linkedin.com") ? encounter.contactInfo : undefined);
+        if (!existing.linkedIn && handshakeLinkedIn) updates.linkedIn = handshakeLinkedIn;
+
+        // Merge notes if there's a reason or new context
+        if (encounter.reason || encounter.transcription) {
+          const newContext = encounter.reason ? `\n\n[Handshake Reason]: ${encounter.reason}` : "";
+          const newNotes = encounter.transcription ? `\n\n[Encounter Notes]: ${encounter.transcription}` : "";
+          updates.notes = (existing.notes || "") + newContext + newNotes;
         }
+
         await upsertConnectionProfile(uid, updates);
       }
       onSuccess();
