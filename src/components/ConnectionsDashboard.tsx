@@ -22,17 +22,27 @@ export default function ConnectionsDashboard({ uid }: Props) {
   const fetchConnections = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, "users", uid, "connections"), orderBy("lastEncounterAt", "desc"));
+      console.log("Fetching connections for UID:", uid);
+      const connectionsRef = collection(db, "users", uid, "connections");
+      const q = query(connectionsRef, orderBy("lastEncounterAt", "desc"));
       const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        createdAt: (doc.data().createdAt as Timestamp)?.toDate() || new Date(),
-        lastEncounterAt: (doc.data().lastEncounterAt as Timestamp)?.toDate() || new Date(),
-      })) as ConnectionProfile[];
+      
+      console.log("Connections querySnapshot size:", querySnapshot.size);
+      
+      const data = querySnapshot.docs.map(doc => {
+        const d = doc.data();
+        console.log("Raw connection data for", doc.id, ":", d);
+        return {
+          ...d,
+          id: doc.id,
+          createdAt: (d.createdAt as Timestamp)?.toDate() || new Date(),
+          lastEncounterAt: (d.lastEncounterAt as Timestamp)?.toDate() || new Date(),
+        };
+      }) as ConnectionProfile[];
+      
       setConnections(data);
-    } catch (error) {
-      console.error("Error fetching connections:", error);
+    } catch (error: any) {
+      console.error("ROLODEX FETCH ERROR:", error.code, error.message);
     } finally {
       setLoading(false);
     }
