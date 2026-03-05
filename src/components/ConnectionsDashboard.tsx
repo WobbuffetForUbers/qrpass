@@ -207,6 +207,7 @@ export default function ConnectionsDashboard({ uid }: Props) {
               <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Identity Intelligence</h2>
               <div className="space-y-4">
                 <div className="space-y-1"><p className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Email Identity</p>{isEditing ? <input value={editData.email || ""} onChange={(e) => setEditData({...editData, email: e.target.value})} className="w-full text-sm font-bold border-b border-gray-100 outline-none" /> : <p className="text-sm font-bold">{selectedConn.email || "N/A"}</p>}</div>
+                <div className="space-y-1"><p className="text-[8px] font-black text-gray-300 uppercase tracking-widest">Phone Identity</p>{isEditing ? <input value={editData.phone || ""} onChange={(e) => setEditData({...editData, phone: e.target.value})} className="w-full text-sm font-bold border-b border-gray-100 outline-none" /> : <p className="text-sm font-bold">{selectedConn.phone || "N/A"}</p>}</div>
                 <div className="space-y-1"><p className="text-[8px] font-black text-gray-300 uppercase tracking-widest">LinkedIn Identity</p>{isEditing ? <input value={editData.linkedIn || ""} onChange={(e) => setEditData({...editData, linkedIn: e.target.value})} className="w-full text-sm font-bold border-b border-gray-100 outline-none" /> : <a href={selectedConn.linkedIn} target="_blank" className="text-sm font-bold text-blue-600 underline">View Profile</a>}</div>
               </div>
             </section>

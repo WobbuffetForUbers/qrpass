@@ -40,6 +40,7 @@ export interface ConnectionProfile {
   id: string;
   name: string;
   email?: string;
+  phone?: string;
   linkedIn?: string;
   company?: string;
   jobTitle?: string;
