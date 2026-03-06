@@ -14,9 +14,9 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
 
   const imageUrlToBase64 = async (url: string): Promise<string | null> => {
     try {
-      console.log("Attempting to fetch image for vCard:", url);
+      console.log("Fetching vCard Image:", url);
       const response = await fetch(url);
-      if (!response.ok) throw new Error("Fetch failed");
+      if (!response.ok) throw new Error("Image fetch failed");
       const blob = await response.blob();
       
       return new Promise((resolve) => {
@@ -26,25 +26,23 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
         
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const SIZE = 200;
+          const SIZE = 200; // Small size for vCard stability
           canvas.width = SIZE;
           canvas.height = SIZE;
           const ctx = canvas.getContext("2d");
           
-          // Center Square Crop for vCard
           let sX = 0, sY = 0, sW = img.width, sH = img.height;
           if (img.width > img.height) { sW = img.height; sX = (img.width - img.height) / 2; } 
           else { sH = img.width; sY = (img.height - img.width) / 2; }
           
           ctx?.drawImage(img, sX, sY, sW, sH, 0, 0, SIZE, SIZE);
           
-          const dataURL = canvas.toDataURL("image/jpeg", 0.7);
+          const dataURL = canvas.toDataURL("image/jpeg", 0.6); // Higher compression for mobile loading
           URL.revokeObjectURL(objectUrl);
           resolve(dataURL.split(",")[1]);
         };
         
-        img.onerror = (e) => {
-          console.error("VCard Image Load Error:", e);
+        img.onerror = () => {
           URL.revokeObjectURL(objectUrl);
           resolve(null);
         };
@@ -52,7 +50,7 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
         img.src = objectUrl;
       });
     } catch (e) {
-      console.error("VCard Image Fetch Error:", e);
+      console.error("VCard Image Error:", e);
       return null;
     }
   };
@@ -60,56 +58,60 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
   const downloadVCard = async () => {
     setIsGenerating(true);
     
-    // 1. SMART NAME PARSING (Handle Degrees)
-    // "Michael Hsieh, B.S." -> First: Michael, Last: Hsieh, B.S.
-    const nameStr = user.displayName.trim();
-    const hasComma = nameStr.includes(",");
+    // 1. ROBUST NAME PARSING
+    const fullName = user.displayName.trim();
     let firstName = "";
     let lastName = "";
+    let suffix = "";
 
-    if (hasComma) {
-      const [baseName, degree] = nameStr.split(",").map(s => s.trim());
-      const parts = baseName.split(/\s+/);
-      firstName = parts[0] || "";
-      lastName = (parts.slice(1).join(" ") + ", " + degree).trim();
+    if (fullName.includes(",")) {
+      const [namePart, suffixPart] = fullName.split(",").map(s => s.trim());
+      suffix = suffixPart;
+      const nameBits = namePart.split(/\s+/);
+      firstName = nameBits[0] || "";
+      lastName = nameBits.slice(1).join(" ");
     } else {
-      const parts = nameStr.split(/\s+/);
-      firstName = parts[0] || "";
-      lastName = parts.slice(1).join(" ");
+      const nameBits = fullName.split(/\s+/);
+      firstName = nameBits[0] || "";
+      lastName = nameBits.slice(1).join(" ");
     }
 
-    // 2. PRIMARY ROLE SELECTION
+    // 2. PRIMARY ROLE
     const primaryRole = (user.roles && user.primaryRoleIndex !== undefined) 
       ? user.roles[user.primaryRoleIndex] 
       : (user.roles && user.roles.length > 0) ? user.roles[0] : { jobTitle: user.jobTitle || "", company: user.company || "" };
 
-    // 3. IMAGE FETCHING
+    // 3. IMAGE & FOLDING
     let photoBase64 = null;
     if (user.avatarUrl) {
       photoBase64 = await imageUrlToBase64(user.avatarUrl);
     }
 
-    // 4. URL SELECTION (Prefer Slug)
+    const foldLine = (str: string) => {
+      return str.match(/.{1,72}/g)?.join("\r\n ") || str;
+    };
+
+    // 4. URL (Prefer Slug)
     const identifier = user.slug || user.uid;
     const profileUrl = `https://qrpass.hsieh.org/u/${identifier}`;
 
+    // 5. VCARD 3.0 CONSTRUCTION (Best for Modern iOS)
     const vCardLines = [
       "BEGIN:VCARD",
-      "VERSION:2.1",
-      `FN:${user.displayName}`,
-      `N:${lastName};${firstName};;;`,
+      "VERSION:3.0",
+      `FN:${fullName}`,
+      `N:${lastName};${firstName};; ;${suffix}`,
       primaryRole.jobTitle ? `TITLE:${primaryRole.jobTitle}` : "",
       primaryRole.company ? `ORG:${primaryRole.company}` : "",
-      user.phone ? `TEL;CELL;VOICE:${user.phone}` : "",
-      user.email ? `EMAIL;PREF;INTERNET:${user.email}` : "",
+      user.phone ? `TEL;TYPE=CELL,VOICE:${user.phone}` : "",
+      user.email ? `EMAIL;TYPE=PREF,INTERNET:${user.email}` : "",
       user.bio ? `NOTE:${user.bio.replace(/\n/g, " ")}` : "",
-      `URL;WORK:${profileUrl}`,
+      `URL;TYPE=WORK:${profileUrl}`,
     ];
 
     if (photoBase64) {
-      vCardLines.push(`PHOTO;JPEG;ENCODING=BASE64:`);
-      vCardLines.push(photoBase64);
-      vCardLines.push(""); 
+      // Line folding is CRITICAL for PHOTO base64 data in vCard 3.0
+      vCardLines.push("PHOTO;TYPE=JPEG;ENCODING=b:" + foldLine(photoBase64));
     }
 
     vCardLines.push("END:VCARD");
@@ -118,7 +120,7 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
     const url = window.URL.createObjectURL(blob);
     const link = document.body.appendChild(document.createElement("a"));
     link.href = url;
-    link.setAttribute("download", `${user.displayName.replace(/[\s,]+/g, "_")}.vcf`);
+    link.setAttribute("download", `${fullName.replace(/[\s,]+/g, "_")}.vcf`);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
