@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 interface Props {
   ownerUid: string;
@@ -45,41 +46,69 @@ export default function HandshakeSystem({ ownerUid, bookingUrl }: Props) {
   };
 
   useEffect(() => {
+    // Only track if we haven't tracked yet this session
     if (hasTracked.current) return;
-    hasTracked.current = true;
 
-    const performGhostScan = async () => {
-      try {
-        const { browser, os, deviceType } = parseUserAgent();
-        const referrer = document.referrer ? new URL(document.referrer).hostname : "Direct Link";
-        
-        const encountersRef = collection(db, "users", ownerUid, "encounters");
-        const docRef = await addDoc(encountersRef, {
-          type: "ghost_scan",
-          contactName: "Anonymous Scan",
-          timestamp: serverTimestamp(),
-          isDraft: true,
-          scannedUserId: null,
-          location: { city: "Remote Scan" },
-          browser,
-          os,
-          deviceType,
-          referrer,
-          userAgent: navigator.userAgent
-        });
-        setEncounterId(docRef.id);
-      } catch (error: any) {
-        console.error("GHOST SCAN ERROR:", error.code, error.message);
+    // We need to wait for auth state to determine if current user is owner
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      // SUPPRESS GHOST SCAN IF VIEWER IS THE OWNER
+      if (currentUser && currentUser.uid === ownerUid) {
+        console.log("Suppressing Ghost Scan: Viewer is the owner.");
+        hasTracked.current = true;
+        return;
       }
-    };
 
-    performGhostScan();
+      if (hasTracked.current) return;
+      hasTracked.current = true;
+
+      const performGhostScan = async () => {
+        try {
+          const { browser, os, deviceType } = parseUserAgent();
+          const referrer = document.referrer ? new URL(document.referrer).hostname : "Direct Link";
+          
+          const encountersRef = collection(db, "users", ownerUid, "encounters");
+          const docRef = await addDoc(encountersRef, {
+            type: "ghost_scan",
+            contactName: "Anonymous Scan",
+            timestamp: serverTimestamp(),
+            isDraft: true,
+            scannedUserId: null,
+            location: { city: "Remote Scan" },
+            browser,
+            os,
+            deviceType,
+            referrer,
+            userAgent: navigator.userAgent
+          });
+          setEncounterId(docRef.id);
+        } catch (error: any) {
+          console.error("GHOST SCAN ERROR:", error.code, error.message);
+        }
+      };
+
+      performGhostScan();
+    });
+
+    return () => unsubscribe();
   }, [ownerUid]);
 
   const handleHandshake = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!encounterId || !name || (!email && !phone)) {
-      alert("Please provide at least your name and one form of contact.");
+    if (!encounterId) {
+      // If no encounterId exists (e.g. owner trying to test the form), create a temporary handshake
+      const encountersRef = collection(db, "users", ownerUid, "encounters");
+      const tempDoc = await addDoc(encountersRef, {
+        type: "handshake",
+        contactName: name,
+        contactEmail: email,
+        contactPhone: phone,
+        contactOther: other,
+        reason: reason,
+        timestamp: serverTimestamp(),
+        isDraft: false,
+        location: { city: "Owner Test" }
+      });
+      setSubmitted(true);
       return;
     }
 
