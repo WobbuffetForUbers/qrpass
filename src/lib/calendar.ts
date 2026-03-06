@@ -6,11 +6,7 @@ export function generateCalendarLink(type: CalendarType, profile: ConnectionProf
   const title = encodeURIComponent(`Follow up with ${profile.name}`);
   const location = encodeURIComponent(encounter?.location?.city || "");
   const notes = encodeURIComponent(
-    `Contact: ${profile.email || "No email"}
-
-Notes from interaction: ${encounter?.transcription || profile.notes || ""}
-
-Sent via qrPass`
+    `Contact: ${profile.email || "No email"}\n\nNotes from interaction: ${encounter?.transcription || profile.notes || ""}\n\nSent via qrPass`
   );
   
   // Default to tomorrow at 9 AM if no encounter date
@@ -30,17 +26,14 @@ Sent via qrPass`
     case 'outlook':
       return `https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&body=${notes}&location=${location}&startdt=${startDate.toISOString()}&enddt=${endDate.toISOString()}`;
     
-    case 'apple':
-      // Apple prefers .ics files, but we can use a generic web-link approach for some clients or generate an ICS blob
+    default:
       return null; 
   }
 }
 
 export function generateICSBlob(profile: ConnectionProfile, encounter?: Encounter) {
   const title = `Follow up with ${profile.name}`;
-  const notes = `Contact: ${profile.email || "No email"}
-
-Notes: ${encounter?.transcription || profile.notes || ""}`;
+  const notes = `Contact: ${profile.email || "No email"}. Notes: ${encounter?.transcription || profile.notes || ""}`.replace(/\n/g, "\\n");
   
   const startDate = encounter?.loopClosureDate 
     ? new Date(encounter.loopClosureDate) 
@@ -53,16 +46,16 @@ Notes: ${encounter?.transcription || profile.notes || ""}`;
   const icsLines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
+    "PRODID:-//qrPass//Relationship Manager//EN",
     "BEGIN:VEVENT",
     `DTSTART:${formatDate(startDate)}`,
     `DTEND:${formatDate(endDate)}`,
     `SUMMARY:${title}`,
     `DESCRIPTION:${notes}`,
-    `LOCATION:${encounter?.location?.city || ""}`,
+    `LOCATION:${encounter?.location?.city || "Remote"}`,
     "END:VEVENT",
     "END:VCALENDAR"
   ];
 
-  return new Blob([icsLines.join("
-")], { type: "text/calendar;charset=utf-8" });
+  return new Blob([icsLines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
 }
