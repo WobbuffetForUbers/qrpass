@@ -349,6 +349,33 @@ export default function Dashboard() {
                   </div>
                 </section>
 
+                {/* API Integrations */}
+                <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
+                  <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center text-black">
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Live API Integrations</h2>
+                    <div className="flex gap-4">
+                      <div className="flex items-center gap-2"><span className="text-[8px] font-black uppercase text-gray-400">GitHub</span>{renderToggle('showGitHub')}</div>
+                      <div className="flex items-center gap-2"><span className="text-[8px] font-black uppercase text-gray-400">Research</span>{renderToggle('showPublications')}</div>
+                    </div>
+                  </div>
+                  <div className="p-8 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-gray-400 ml-1">GitHub User</label>
+                        <input type="text" value={profile.githubUsername || ""} onChange={(e) => setProfile({...profile, githubUsername: e.target.value})} placeholder="octocat" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-gray-400 ml-1">PubMed IDs</label>
+                        <input type="text" value={pmidString} onChange={(e) => setPmidString(e.target.value)} placeholder="34567890" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-gray-400 ml-1">DOI IDs</label>
+                        <input type="text" value={doiString} onChange={(e) => setDoiString(e.target.value)} placeholder="10.1001/jama.2023.1" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
                 {/* Innovation Gallery */}
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center">
