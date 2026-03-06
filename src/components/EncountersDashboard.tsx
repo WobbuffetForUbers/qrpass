@@ -125,7 +125,16 @@ export default function EncountersDashboard({ uid }: Props) {
                 {encounter.connectionProfileId && <span className="px-2 py-0.5 bg-blue-900 text-white rounded text-[8px] font-black uppercase tracking-widest">Linked to Intel</span>}
                 {encounter.loopClosureDate && encounter.loopClosureDate < now && <span className="px-2 py-0.5 bg-orange-500 text-white rounded text-[8px] font-black uppercase tracking-widest animate-pulse">ACTION REQUIRED</span>}
               </div>
-              <h3 className="text-lg font-bold text-[#1A1C1E]">{encounter.contactName || (encounter.location?.city || "Anonymous Scan")}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-[#1A1C1E]">{encounter.contactName || (encounter.location?.city || "Anonymous Scan")}</h3>
+                {encounter.type === 'ghost_scan' && (
+                  <div className="flex items-center gap-1.5 ml-2">
+                    <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[7px] font-black uppercase">{encounter.os}</span>
+                    <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[7px] font-black uppercase">{encounter.browser}</span>
+                    {encounter.referrer && <span className="px-1.5 py-0.5 bg-blue-50 text-blue-400 rounded text-[7px] font-black uppercase tracking-tighter">via {encounter.referrer}</span>}
+                  </div>
+                )}
+              </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1">
                 {encounter.contactEmail && <p className="text-[10px] font-bold text-blue-600 lowercase">{encounter.contactEmail}</p>}
                 {encounter.contactPhone && <p className="text-[10px] font-bold text-gray-500">{encounter.contactPhone}</p>}

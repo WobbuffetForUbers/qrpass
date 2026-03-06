@@ -21,12 +21,38 @@ export default function HandshakeSystem({ ownerUid, bookingUrl }: Props) {
   const [loading, setLoading] = useState(false);
   const hasTracked = useRef(false);
 
+  const parseUserAgent = () => {
+    const ua = navigator.userAgent;
+    let browser = "Unknown Browser";
+    let os = "Unknown OS";
+    let deviceType = "Desktop";
+
+    if (/mobi/i.test(ua)) deviceType = "Mobile";
+    if (/tablet/i.test(ua)) deviceType = "Tablet";
+
+    if (/chrome|crios/i.test(ua)) browser = "Chrome";
+    else if (/firefox|iceweasel/i.test(ua)) browser = "Firefox";
+    else if (/safari/i.test(ua)) browser = "Safari";
+    else if (/edge/i.test(ua)) browser = "Edge";
+
+    if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+    else if (/android/i.test(ua)) os = "Android";
+    else if (/windows/i.test(ua)) os = "Windows";
+    else if (/mac/i.test(ua)) os = "macOS";
+    else if (/linux/i.test(ua)) os = "Linux";
+
+    return { browser, os, deviceType };
+  };
+
   useEffect(() => {
     if (hasTracked.current) return;
     hasTracked.current = true;
 
     const performGhostScan = async () => {
       try {
+        const { browser, os, deviceType } = parseUserAgent();
+        const referrer = document.referrer ? new URL(document.referrer).hostname : "Direct Link";
+        
         const encountersRef = collection(db, "users", ownerUid, "encounters");
         const docRef = await addDoc(encountersRef, {
           type: "ghost_scan",
@@ -34,7 +60,12 @@ export default function HandshakeSystem({ ownerUid, bookingUrl }: Props) {
           timestamp: serverTimestamp(),
           isDraft: true,
           scannedUserId: null,
-          location: { city: "Remote Scan" }
+          location: { city: "Remote Scan" },
+          browser,
+          os,
+          deviceType,
+          referrer,
+          userAgent: navigator.userAgent
         });
         setEncounterId(docRef.id);
       } catch (error: any) {

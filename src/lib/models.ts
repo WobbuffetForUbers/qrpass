@@ -32,6 +32,11 @@ export interface Encounter {
     city: string;
   };
   contextChips: string[];
+  userAgent?: string;
+  browser?: string;
+  os?: string;
+  deviceType?: string;
+  referrer?: string;
   transcription?: string;
   loopClosureDate?: Date | null;
 }
