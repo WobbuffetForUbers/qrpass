@@ -175,6 +175,11 @@ export default function Dashboard() {
     setProfile({ ...profile, roles: profile.roles.filter((_, i) => i !== index) });
   };
 
+  const setPrimaryRole = (index: number) => {
+    if (!profile) return;
+    setProfile({ ...profile, primaryRoleIndex: index });
+  };
+
   const addCVHighlight = () => {
     if (!profile) return;
     const current = profile.cvHighlights || [];
@@ -297,7 +302,6 @@ export default function Dashboard() {
                       <input type="file" accept="image/*" onChange={handleImageUpload} className="block text-[10px] font-black uppercase file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-[#1A1C1E] file:text-white cursor-pointer" />
                     </div>
 
-                    {/* Premium Slug Editor */}
                     <div className="space-y-2 border-b border-gray-50 pb-8">
                       <div className="flex justify-between items-center">
                         <label className="text-[10px] font-black uppercase text-gray-400">Custom URL Slug (PRO)</label>
@@ -307,16 +311,8 @@ export default function Dashboard() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-gray-300">qrpass.hsieh.org/u/</span>
-                        <input 
-                          type="text" 
-                          value={profile.slug || ""} 
-                          disabled={!profile.isPremium}
-                          onChange={(e) => handleSlugChange(e.target.value)}
-                          placeholder="your-name" 
-                          className={`flex-1 px-4 py-3 bg-[#F8F9FA] border rounded-lg font-bold text-sm focus:outline-none ${!profile.isPremium ? 'opacity-50 grayscale cursor-not-allowed' : 'border-[#E1E3E5] focus:border-[#1A1C1E]'}`} 
-                        />
+                        <input type="text" value={profile.slug || ""} disabled={!profile.isPremium} onChange={(e) => handleSlugChange(e.target.value)} placeholder="your-name" className={`flex-1 px-4 py-3 bg-[#F8F9FA] border rounded-lg font-bold text-sm focus:outline-none ${!profile.isPremium ? 'opacity-50 grayscale cursor-not-allowed' : 'border-[#E1E3E5] focus:border-[#1A1C1E]'}`} />
                       </div>
-                      {!profile.isPremium && <p className="text-[8px] font-bold text-orange-600 uppercase tracking-tighter">Upgrade to Pro to claim your custom URL</p>}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -328,9 +324,12 @@ export default function Dashboard() {
                       <div className="flex justify-between items-center"><label className="text-[10px] font-black uppercase text-gray-400">Professional Roles (Hats)</label><button onClick={addRole} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ Add Role</button></div>
                       <div className="space-y-4">
                         {(profile.roles || []).map((role, idx) => (
-                          <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#F8F9FA] p-4 rounded-xl relative group">
-                            <button onClick={() => removeRole(idx)} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">×</button>
-                            <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">Job Title</label><input type="text" value={role.jobTitle} onChange={(e) => updateRole(idx, 'jobTitle', e.target.value)} placeholder="e.g. CEO" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold" /></div>
+                          <div key={idx} className={`grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl relative group transition-all border ${profile.primaryRoleIndex === idx ? 'bg-blue-50/50 border-blue-200' : 'bg-[#F8F9FA] border-transparent'}`}>
+                            <div className="absolute -top-2 -right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => setPrimaryRole(idx)} className={`w-6 h-6 rounded-full text-[8px] font-black uppercase flex items-center justify-center shadow-lg ${profile.primaryRoleIndex === idx ? 'bg-green-500 text-white' : 'bg-white text-gray-400 hover:text-black'}`} title="Mark as Primary for vCard">{profile.primaryRoleIndex === idx ? '✓' : '★'}</button>
+                              <button onClick={() => removeRole(idx)} className="w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center shadow-lg">×</button>
+                            </div>
+                            <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">Job Title {profile.primaryRoleIndex === idx && <span className="text-blue-600 ml-1">(Primary)</span>}</label><input type="text" value={role.jobTitle} onChange={(e) => updateRole(idx, 'jobTitle', e.target.value)} placeholder="e.g. CEO" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold" /></div>
                             <div className="space-y-1"><label className="text-[8px] font-black uppercase text-gray-400">Organization</label><input type="text" value={role.company} onChange={(e) => updateRole(idx, 'company', e.target.value)} placeholder="e.g. Hospital Group" className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold" /></div>
                           </div>
                         ))}
@@ -349,78 +348,23 @@ export default function Dashboard() {
                   </div>
                 </section>
 
-                {/* API Integrations */}
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
-                  <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center text-black">
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Live API Integrations</h2>
-                    <div className="flex gap-4">
-                      <div className="flex items-center gap-2"><span className="text-[8px] font-black uppercase text-gray-400">GitHub</span>{renderToggle('showGitHub')}</div>
-                      <div className="flex items-center gap-2"><span className="text-[8px] font-black uppercase text-gray-400">Research</span>{renderToggle('showPublications')}</div>
-                    </div>
-                  </div>
-                  <div className="p-8 space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black uppercase text-gray-400 ml-1">GitHub User</label>
-                        <input type="text" value={profile.githubUsername || ""} onChange={(e) => setProfile({...profile, githubUsername: e.target.value})} placeholder="octocat" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black uppercase text-gray-400 ml-1">PubMed IDs</label>
-                        <input type="text" value={pmidString} onChange={(e) => setPmidString(e.target.value)} placeholder="34567890" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black uppercase text-gray-400 ml-1">DOI IDs</label>
-                        <input type="text" value={doiString} onChange={(e) => setDoiString(e.target.value)} placeholder="10.1001/jama.2023.1" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
-                      </div>
-                    </div>
-                  </div>
+                  <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center text-black"><h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Live API Integrations</h2><div className="flex gap-4"><div className="flex items-center gap-2"><span className="text-[8px] font-black uppercase text-gray-400">GitHub</span>{renderToggle('showGitHub')}</div><div className="flex items-center gap-2"><span className="text-[8px] font-black uppercase text-gray-400">Research</span>{renderToggle('showPublications')}</div></div></div>
+                  <div className="p-8 space-y-6"><div className="grid grid-cols-1 sm:grid-cols-3 gap-6"><div className="space-y-1"><label className="text-[9px] font-black uppercase text-gray-400 ml-1">GitHub User</label><input type="text" value={profile.githubUsername || ""} onChange={(e) => setProfile({...profile, githubUsername: e.target.value})} placeholder="octocat" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div><div className="space-y-1"><label className="text-[9px] font-black uppercase text-gray-400 ml-1">PubMed IDs</label><input type="text" value={pmidString} onChange={(e) => setPmidString(e.target.value)} placeholder="34567890" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div><div className="space-y-1"><label className="text-[9px] font-black uppercase text-gray-400 ml-1">DOI IDs</label><input type="text" value={doiString} onChange={(e) => setDoiString(e.target.value)} placeholder="10.1001/jama.2023.1" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" /></div></div></div>
                 </section>
 
-                {/* Innovation Gallery */}
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
-                  <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center">
-                    <div className="flex items-center gap-4"><h2 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Innovation Gallery</h2>{renderToggle('showHackathons')}</div>
-                    {(profile.hackathonProjects || []).length < 3 && <button onClick={addHackathon} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ New Pitch</button>}
-                  </div>
-                  <div className="p-8 space-y-8">
-                    {(profile.hackathonProjects || []).map((h, i) => (
-                      <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group">
-                        <button onClick={() => removeHackathon(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
-                        <input placeholder="Project/Pitch Title" value={h.title} onChange={(e) => updateHackathon(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" />
-                        <textarea placeholder="Problem Statement" value={h.problem} onChange={(e) => updateHackathon(i, 'problem', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none" rows={2} />
-                        <div className="space-y-2 text-left">
-                          <div className="flex justify-between items-center"><label className="text-[9px] font-black uppercase text-gray-400">Tech Stack</label><button onClick={() => addTechChip(i)} className="text-[9px] font-black text-blue-600">+ Add</button></div>
-                          <div className="flex flex-wrap gap-2">
-                            {h.techStack.map((tech, tIdx) => (
-                              <span key={tIdx} className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded text-[10px] font-bold">
-                                {tech}
-                                <button onClick={() => removeTechChip(i, tIdx)} className="text-red-400 hover:text-red-600 ml-1">×</button>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <textarea placeholder="Outcome" value={h.outcome} onChange={(e) => updateHackathon(i, 'outcome', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none font-bold text-green-700" rows={2} />
-                      </div>
-                    ))}
-                  </div>
+                  <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center text-black"><div className="flex items-center gap-4"><h2 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Innovation Gallery</h2>{renderToggle('showHackathons')}</div>{(profile.hackathonProjects || []).length < 3 && <button onClick={addHackathon} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ New Pitch</button>}</div>
+                  <div className="p-8 space-y-8">{(profile.hackathonProjects || []).map((h, i) => (
+                    <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group text-black"><button onClick={() => removeHackathon(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button><input placeholder="Project/Pitch Title" value={h.title} onChange={(e) => updateHackathon(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" /><textarea placeholder="Problem Statement" value={h.problem} onChange={(e) => updateHackathon(i, 'problem', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none" rows={2} /><div className="space-y-2 text-left"><div className="flex justify-between items-center"><label className="text-[9px] font-black uppercase text-gray-400">Tech Stack</label><button onClick={() => addTechChip(i)} className="text-[9px] font-black text-blue-600">+ Add</button></div><div className="flex flex-wrap gap-2">{h.techStack.map((tech, tIdx) => (<span key={tIdx} className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded text-[10px] font-bold">{tech}<button onClick={() => removeTechChip(i, tIdx)} className="text-red-400 hover:text-red-600 ml-1">×</button></span>))}</div></div><textarea placeholder="Outcome" value={h.outcome} onChange={(e) => updateHackathon(i, 'outcome', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none font-bold text-green-700" rows={2} /></div>
+                  ))}</div>
                 </section>
 
-                {/* Core Achievements */}
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
-                  <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center">
-                    <div className="flex items-center gap-4"><h2 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Core Achievements</h2>{renderToggle('showCvHighlights')}</div>
-                    {(profile.cvHighlights || []).length < 3 && <button onClick={addCVHighlight} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ Add Record</button>}
-                  </div>
-                  <div className="p-8 space-y-6">
-                    {(profile.cvHighlights || []).map((h, i) => (
-                      <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group">
-                        <button onClick={() => removeCVHighlight(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
-                        <input placeholder="Achievement Title" value={h.title} onChange={(e) => updateCVHighlight(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" />
-                        <textarea placeholder="Description" value={h.description} onChange={(e) => updateCVHighlight(i, 'description', e.target.value)} className="w-full bg-transparent text-sm text-gray-500 outline-none resize-none" rows={2} />
-                        <input placeholder="Evidence Link" value={h.link} onChange={(e) => updateCVHighlight(i, 'link', e.target.value)} className="w-full bg-transparent text-xs text-blue-500 font-bold outline-none" />
-                      </div>
-                    ))}
-                  </div>
+                  <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center text-black"><div className="flex items-center gap-4"><h2 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Core Achievements</h2>{renderToggle('showCvHighlights')}</div>{(profile.cvHighlights || []).length < 3 && <button onClick={addCVHighlight} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ Add Record</button>}</div>
+                  <div className="p-8 space-y-6">{(profile.cvHighlights || []).map((h, i) => (
+                    <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group text-black"><button onClick={() => removeCVHighlight(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button><input placeholder="Achievement Title" value={h.title} onChange={(e) => updateCVHighlight(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" /><textarea placeholder="Description" value={h.description} onChange={(e) => updateCVHighlight(i, 'description', e.target.value)} className="w-full bg-transparent text-sm text-gray-500 outline-none resize-none" rows={2} /><input placeholder="Evidence Link" value={h.link} onChange={(e) => updateCVHighlight(i, 'link', e.target.value)} className="w-full bg-transparent text-xs text-blue-500 font-bold outline-none" /></div>
+                  ))}</div>
                 </section>
               </div>
 

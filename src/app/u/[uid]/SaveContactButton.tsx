@@ -21,39 +21,30 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
       
       return new Promise((resolve) => {
         const img = new Image();
-        img.crossOrigin = "anonymous"; // Essential for CORS
+        img.crossOrigin = "anonymous";
         const objectUrl = URL.createObjectURL(blob);
         
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          const MAX_SIZE = 200;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
-            }
-          } else {
-            if (height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
+          const SIZE = 200;
+          canvas.width = SIZE;
+          canvas.height = SIZE;
           const ctx = canvas.getContext("2d");
-          ctx?.drawImage(img, 0, 0, width, height);
           
-          const dataURL = canvas.toDataURL("image/jpeg", 0.7); // Slightly more compression for mobile
+          // Center Square Crop for vCard
+          let sX = 0, sY = 0, sW = img.width, sH = img.height;
+          if (img.width > img.height) { sW = img.height; sX = (img.width - img.height) / 2; } 
+          else { sH = img.width; sY = (img.height - img.width) / 2; }
+          
+          ctx?.drawImage(img, sX, sY, sW, sH, 0, 0, SIZE, SIZE);
+          
+          const dataURL = canvas.toDataURL("image/jpeg", 0.7);
           URL.revokeObjectURL(objectUrl);
           resolve(dataURL.split(",")[1]);
         };
         
         img.onerror = (e) => {
-          console.error("Image loading error - likely CORS:", e);
+          console.error("VCard Image Load Error:", e);
           URL.revokeObjectURL(objectUrl);
           resolve(null);
         };
@@ -61,7 +52,7 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
         img.src = objectUrl;
       });
     } catch (e) {
-      console.error("VCard Image Fetch Error (CORS?):", e);
+      console.error("VCard Image Fetch Error:", e);
       return null;
     }
   };
@@ -69,34 +60,56 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
   const downloadVCard = async () => {
     setIsGenerating(true);
     
-    const nameParts = user.displayName.trim().split(/\s+/);
-    const firstName = nameParts[0] || "";
-    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
+    // 1. SMART NAME PARSING (Handle Degrees)
+    // "Michael Hsieh, B.S." -> First: Michael, Last: Hsieh, B.S.
+    const nameStr = user.displayName.trim();
+    const hasComma = nameStr.includes(",");
+    let firstName = "";
+    let lastName = "";
 
+    if (hasComma) {
+      const [baseName, degree] = nameStr.split(",").map(s => s.trim());
+      const parts = baseName.split(/\s+/);
+      firstName = parts[0] || "";
+      lastName = (parts.slice(1).join(" ") + ", " + degree).trim();
+    } else {
+      const parts = nameStr.split(/\s+/);
+      firstName = parts[0] || "";
+      lastName = parts.slice(1).join(" ");
+    }
+
+    // 2. PRIMARY ROLE SELECTION
+    const primaryRole = (user.roles && user.primaryRoleIndex !== undefined) 
+      ? user.roles[user.primaryRoleIndex] 
+      : (user.roles && user.roles.length > 0) ? user.roles[0] : { jobTitle: user.jobTitle || "", company: user.company || "" };
+
+    // 3. IMAGE FETCHING
     let photoBase64 = null;
     if (user.avatarUrl) {
       photoBase64 = await imageUrlToBase64(user.avatarUrl);
     }
 
-    // VERSION 2.1 is significantly more reliable for iOS photo embedding
+    // 4. URL SELECTION (Prefer Slug)
+    const identifier = user.slug || user.uid;
+    const profileUrl = `https://qrpass.hsieh.org/u/${identifier}`;
+
     const vCardLines = [
       "BEGIN:VCARD",
       "VERSION:2.1",
       `FN:${user.displayName}`,
       `N:${lastName};${firstName};;;`,
-      user.jobTitle ? `TITLE:${user.jobTitle}` : "",
-      user.company ? `ORG:${user.company}` : "",
+      primaryRole.jobTitle ? `TITLE:${primaryRole.jobTitle}` : "",
+      primaryRole.company ? `ORG:${primaryRole.company}` : "",
       user.phone ? `TEL;CELL;VOICE:${user.phone}` : "",
       user.email ? `EMAIL;PREF;INTERNET:${user.email}` : "",
-      user.bio ? `NOTE:${user.bio}` : "",
-      `URL;WORK:https://qrpass-nine-zeta.vercel.app/u/${user.uid}`,
+      user.bio ? `NOTE:${user.bio.replace(/\n/g, " ")}` : "",
+      `URL;WORK:${profileUrl}`,
     ];
 
     if (photoBase64) {
-      // vCard 2.1 style for Base64 photos
       vCardLines.push(`PHOTO;JPEG;ENCODING=BASE64:`);
       vCardLines.push(photoBase64);
-      vCardLines.push(""); // Empty line after base64 data is required by 2.1
+      vCardLines.push(""); 
     }
 
     vCardLines.push("END:VCARD");
@@ -105,7 +118,7 @@ export default function SaveContactButton({ user, accentColor, isBold }: Props) 
     const url = window.URL.createObjectURL(blob);
     const link = document.body.appendChild(document.createElement("a"));
     link.href = url;
-    link.setAttribute("download", `${user.displayName.replace(/\s+/g, "_")}.vcf`);
+    link.setAttribute("download", `${user.displayName.replace(/[\s,]+/g, "_")}.vcf`);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);

@@ -81,6 +81,7 @@ export interface UserProfile {
   displayName: string;
   bio: string;
   roles?: Role[];
+  primaryRoleIndex?: number;
   jobTitle?: string;
   company?: string;
   phone?: string;
