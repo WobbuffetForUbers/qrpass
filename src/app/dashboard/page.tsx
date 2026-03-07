@@ -25,6 +25,7 @@ const COLOR_PRESETS = [
 export default function Dashboard() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isWarmStart, setIsWarmStart] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -34,32 +35,60 @@ export default function Dashboard() {
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const router = useRouter();
 
+  // Warm Start: Load data from localStorage immediately while auth catches up
+  useEffect(() => {
+    const cachedUid = localStorage.getItem("qrpass_session_uid");
+    if (cachedUid) {
+      console.log("Warm Start: Pre-loading profile for UID:", cachedUid);
+      setIsWarmStart(true);
+      fetchProfile(cachedUid);
+    }
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         if (user) {
-          const docRef = doc(db, "users", user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data() as UserProfile;
-            if (!data.designPrefs.font) data.designPrefs.font = 'sans';
-            setProfile(data);
-            if (data.pubmedIds) setPmidString(data.pubmedIds.join(", "));
-            if (data.doiIds) setDoiString(data.doiIds.join(", "));
-          } else {
-            setError("Profile not found.");
-          }
+          // Store for next session's warm start
+          localStorage.setItem("qrpass_session_uid", user.uid);
+          await fetchProfile(user.uid);
         } else {
-          router.push("/login");
+          // If we weren't in a warm start, or auth explicitly failed, go to login
+          if (!localStorage.getItem("qrpass_session_uid")) {
+            router.push("/login");
+          }
         }
       } catch (err: any) {
         setError("Connection failed.");
       } finally {
         setLoading(false);
+        setIsWarmStart(false);
       }
     });
     return () => unsubscribe();
   }, [router]);
+
+  const fetchProfile = async (uid: string) => {
+    try {
+      const docRef = doc(db, "users", uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data() as UserProfile;
+        if (!data.designPrefs.font) data.designPrefs.font = 'sans';
+        setProfile(data);
+        if (data.pubmedIds) setPmidString(data.pubmedIds.join(", "));
+        if (data.doiIds) setDoiString(data.doiIds.join(", "));
+      }
+    } catch (e) {
+      console.error("Profile Fetch Error:", e);
+    }
+  };
+
+  const handleSignOut = async () => {
+    localStorage.removeItem("qrpass_session_uid");
+    await signOut(auth);
+    router.push("/login");
+  };
 
   const checkSlug = async (slug: string) => {
     if (!slug || slug.length < 3) {
@@ -86,7 +115,7 @@ export default function Dashboard() {
       return;
     }
     const clean = val.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
-    setProfile({ ...profile, slug: clean });
+    setProfile({ ...profile, slug: clean } as UserProfile);
     checkSlug(clean);
   };
 
@@ -142,81 +171,81 @@ export default function Dashboard() {
   const toggleField = async (field: keyof UserProfile) => {
     if (!profile) return;
     const newStatus = !profile[field];
-    setProfile({ ...profile, [field]: newStatus });
+    setProfile({ ...profile, [field]: newStatus } as UserProfile);
     await updateDoc(doc(db, "users", profile.uid), { [field]: newStatus });
   };
 
   const togglePremium = async () => {
     if (!profile) return;
     const newStatus = !profile.isPremium;
-    setProfile({ ...profile, isPremium: newStatus });
+    setProfile({ ...profile, isPremium: newStatus } as UserProfile);
     await updateDoc(doc(db, "users", profile.uid), { isPremium: newStatus });
   };
 
   const updateDesign = (field: keyof DesignPrefs, value: string) => {
     if (!profile) return;
-    setProfile({ ...profile, designPrefs: { ...profile.designPrefs, [field]: value } });
+    setProfile({ ...profile, designPrefs: { ...profile.designPrefs, [field]: value } } as UserProfile);
   };
 
   const addRole = () => {
     if (!profile) return;
     const current = profile.roles || [];
-    setProfile({ ...profile, roles: [...current, { jobTitle: "", company: "" }] });
+    setProfile({ ...profile, roles: [...current, { jobTitle: "", company: "" }] } as UserProfile);
   };
 
   const updateRole = (index: number, field: keyof Role, value: string) => {
     if (!profile || !profile.roles) return;
     const newRoles = [...profile.roles];
     newRoles[index] = { ...newRoles[index], [field]: value };
-    setProfile({ ...profile, roles: newRoles });
+    setProfile({ ...profile, roles: newRoles } as UserProfile);
   };
 
   const removeRole = (index: number) => {
     if (!profile || !profile.roles) return;
-    setProfile({ ...profile, roles: profile.roles.filter((_, i) => i !== index) });
+    setProfile({ ...profile, roles: profile.roles.filter((_, i) => i !== index) } as UserProfile);
   };
 
   const setPrimaryRole = (index: number) => {
     if (!profile) return;
-    setProfile({ ...profile, primaryRoleIndex: index });
+    setProfile({ ...profile, primaryRoleIndex: index } as UserProfile);
   };
 
   const addCVHighlight = () => {
     if (!profile) return;
     const current = profile.cvHighlights || [];
     if (current.length >= 3) return;
-    setProfile({ ...profile, cvHighlights: [...current, { title: "", description: "", link: "" }] });
+    setProfile({ ...profile, cvHighlights: [...current, { title: "", description: "", link: "" }] } as UserProfile);
   };
 
   const updateCVHighlight = (index: number, field: keyof CVHighlight, value: string) => {
     if (!profile || !profile.cvHighlights) return;
     const newH = [...profile.cvHighlights];
     newH[index] = { ...newH[index], [field]: value };
-    setProfile({ ...profile, cvHighlights: newH });
+    setProfile({ ...profile, cvHighlights: newH } as UserProfile);
   };
 
   const removeCVHighlight = (index: number) => {
     if (!profile || !profile.cvHighlights) return;
-    setProfile({ ...profile, cvHighlights: profile.cvHighlights.filter((_, i) => i !== index) });
+    setProfile({ ...profile, cvHighlights: profile.cvHighlights.filter((_, i) => i !== index) } as UserProfile);
   };
 
   const addHackathon = () => {
     if (!profile) return;
     const current = profile.hackathonProjects || [];
     if (current.length >= 3) return;
-    setProfile({ ...profile, hackathonProjects: [...current, { title: "", problem: "", techStack: [], outcome: "" }] });
+    setProfile({ ...profile, hackathonProjects: [...current, { title: "", problem: "", techStack: [], outcome: "" }] } as UserProfile);
   };
 
   const updateHackathon = (index: number, field: keyof HackathonProject, value: any) => {
     if (!profile || !profile.hackathonProjects) return;
     const newH = [...profile.hackathonProjects];
     newH[index] = { ...newH[index], [field]: value };
-    setProfile({ ...profile, hackathonProjects: newH });
+    setProfile({ ...profile, hackathonProjects: newH } as UserProfile);
   };
 
   const removeHackathon = (index: number) => {
     if (!profile || !profile.hackathonProjects) return;
-    setProfile({ ...profile, hackathonProjects: profile.hackathonProjects.filter((_, i) => i !== index) });
+    setProfile({ ...profile, hackathonProjects: profile.hackathonProjects.filter((_, i) => i !== index) } as UserProfile);
   };
 
   const addTechChip = (hIndex: number) => {
@@ -238,22 +267,26 @@ export default function Dashboard() {
     if (!profile) return;
     const current = profile.qiProjects || [];
     if (current.length >= 3) return;
-    setProfile({ ...profile, qiProjects: [...current, { title: "", problem: "", intervention: "", metric: "", result: "" }] });
+    setProfile({ ...profile, qiProjects: [...current, { title: "", problem: "", intervention: "", metric: "", result: "" }] } as UserProfile);
   };
 
   const updateQIProject = (index: number, field: keyof QIProject, value: string) => {
     if (!profile || !profile.qiProjects) return;
     const newP = [...profile.qiProjects];
     newP[index] = { ...newP[index], [field]: value };
-    setProfile({ ...profile, qiProjects: newP });
+    setProfile({ ...profile, qiProjects: newP } as UserProfile);
   };
 
   const removeQIProject = (index: number) => {
     if (!profile || !profile.qiProjects) return;
-    setProfile({ ...profile, qiProjects: profile.qiProjects.filter((_, i) => i !== index) });
+    setProfile({ ...profile, qiProjects: profile.qiProjects.filter((_, i) => i !== index) } as UserProfile);
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-black uppercase tracking-widest text-xs bg-white text-black">Initializing...</div>;
+  if (loading && !profile) return <div className="min-h-screen flex flex-col items-center justify-center bg-white text-black space-y-4">
+    <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+    <p className="font-black uppercase tracking-[0.2em] text-[10px]">Synchronizing Identity...</p>
+  </div>;
+
   if (!profile) return null;
 
   const publicUrl = profile.slug 
@@ -269,7 +302,14 @@ export default function Dashboard() {
   );
 
   return (
-    <main className="min-h-screen bg-[#F8F9FA] text-[#1A1C1E] p-4 sm:p-10 font-sans antialiased text-left">
+    <main className="min-h-screen bg-[#F8F9FA] text-[#1A1C1E] p-4 sm:p-10 font-sans antialiased text-left relative">
+      {isWarmStart && (
+        <div className="absolute top-4 right-4 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full flex items-center gap-2 animate-pulse z-[100]">
+          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+          <span className="text-[8px] font-black uppercase text-blue-600 tracking-widest">Resuming Session...</span>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-10">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white border border-[#E1E3E5] p-8 rounded-xl shadow-sm">
           <div className="space-y-1">
@@ -278,7 +318,7 @@ export default function Dashboard() {
           </div>
           <div className="flex gap-3">
             <Link href={profile.slug ? `/u/${profile.slug}` : `/u/${profile.uid}`} className="px-6 py-3 bg-[#1A1C1E] text-white rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-black transition-colors">Launch Public Card</Link>
-            <button onClick={() => signOut(auth)} className="px-6 py-3 border border-[#E1E3E5] text-gray-500 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-all">Terminate Session</button>
+            <button onClick={handleSignOut} className="px-6 py-3 border border-[#E1E3E5] text-gray-500 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-all">Terminate Session</button>
           </div>
         </header>
 
@@ -290,8 +330,8 @@ export default function Dashboard() {
 
         {activeTab === 'editor' && (
           <div className="space-y-10 animate-in fade-in duration-700">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8 text-black">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-black">
+              <div className="lg:col-span-2 space-y-8">
                 {/* Identity */}
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] font-black uppercase text-[10px] tracking-widest text-gray-500">Identity & Credentials</div>
@@ -357,14 +397,14 @@ export default function Dashboard() {
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center text-black"><div className="flex items-center gap-4"><h2 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Innovation Gallery</h2>{renderToggle('showHackathons')}</div>{(profile.hackathonProjects || []).length < 3 && <button onClick={addHackathon} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ New Pitch</button>}</div>
                   <div className="p-8 space-y-8">{(profile.hackathonProjects || []).map((h, i) => (
-                    <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group text-black"><button onClick={() => removeHackathon(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button><input placeholder="Project/Pitch Title" value={h.title} onChange={(e) => updateHackathon(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" /><textarea placeholder="Problem Statement" value={h.problem} onChange={(e) => updateHackathon(i, 'problem', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none" rows={2} /><div className="space-y-2 text-left"><div className="flex justify-between items-center"><label className="text-[9px] font-black uppercase text-gray-400">Tech Stack</label><button onClick={() => addTechChip(i)} className="text-[9px] font-black text-blue-600">+ Add</button></div><div className="flex flex-wrap gap-2">{h.techStack.map((tech, tIdx) => (<span key={tIdx} className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded text-[10px] font-bold">{tech}<button onClick={() => removeTechChip(i, tIdx)} className="text-red-400 hover:text-red-600 ml-1">×</button></span>))}</div></div><textarea placeholder="Outcome" value={h.outcome} onChange={(e) => updateHackathon(i, 'outcome', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none font-bold text-green-700" rows={2} /></div>
+                    <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group text-black text-left"><button onClick={() => removeHackathon(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button><input placeholder="Project/Pitch Title" value={h.title} onChange={(e) => updateHackathon(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" /><textarea placeholder="Problem Statement" value={h.problem} onChange={(e) => updateHackathon(i, 'problem', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none" rows={2} /><div className="space-y-2 text-left"><div className="flex justify-between items-center"><label className="text-[9px] font-black uppercase text-gray-400">Tech Stack</label><button onClick={() => addTechChip(i)} className="text-[9px] font-black text-blue-600">+ Add</button></div><div className="flex flex-wrap gap-2">{h.techStack.map((tech, tIdx) => (<span key={tIdx} className="flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded text-[10px] font-bold">{tech}<button onClick={() => removeTechChip(i, tIdx)} className="text-red-400 hover:text-red-600 ml-1">×</button></span>))}</div></div><textarea placeholder="Outcome" value={h.outcome} onChange={(e) => updateHackathon(i, 'outcome', e.target.value)} className="w-full bg-white border border-[#E1E3E5] p-3 rounded text-sm resize-none font-bold text-green-700" rows={2} /></div>
                   ))}</div>
                 </section>
 
                 <section className="bg-white border border-[#E1E3E5] rounded-xl overflow-hidden shadow-sm">
                   <div className="bg-[#F1F3F5] px-8 py-4 border-b border-[#E1E3E5] flex justify-between items-center text-black"><div className="flex items-center gap-4"><h2 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Core Achievements</h2>{renderToggle('showCvHighlights')}</div>{(profile.cvHighlights || []).length < 3 && <button onClick={addCVHighlight} className="text-[10px] font-black text-blue-600 uppercase tracking-widest">+ Add Record</button>}</div>
                   <div className="p-8 space-y-6">{(profile.cvHighlights || []).map((h, i) => (
-                    <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group text-black"><button onClick={() => removeCVHighlight(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button><input placeholder="Achievement Title" value={h.title} onChange={(e) => updateCVHighlight(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" /><textarea placeholder="Description" value={h.description} onChange={(e) => updateCVHighlight(i, 'description', e.target.value)} className="w-full bg-transparent text-sm text-gray-500 outline-none resize-none" rows={2} /><input placeholder="Evidence Link" value={h.link} onChange={(e) => updateCVHighlight(i, 'link', e.target.value)} className="w-full bg-transparent text-xs text-blue-500 font-bold outline-none" /></div>
+                    <div key={i} className="p-6 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg space-y-4 relative group text-black text-left"><button onClick={() => removeCVHighlight(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button><input placeholder="Achievement Title" value={h.title} onChange={(e) => updateCVHighlight(i, 'title', e.target.value)} className="w-full bg-transparent font-bold text-lg outline-none" /><textarea placeholder="Description" value={h.description} onChange={(e) => updateCVHighlight(i, 'description', e.target.value)} className="w-full bg-transparent text-sm text-gray-500 outline-none resize-none" rows={2} /><input placeholder="Evidence Link" value={h.link} onChange={(e) => updateCVHighlight(i, 'link', e.target.value)} className="w-full bg-transparent text-xs text-blue-500 font-bold outline-none" /></div>
                   ))}</div>
                 </section>
               </div>

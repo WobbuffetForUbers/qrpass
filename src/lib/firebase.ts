@@ -2,13 +2,11 @@ import { initializeApp, getApps } from 'firebase/app';
 import { 
   getFirestore, 
   initializeFirestore, 
-  memoryLocalCache, 
-  persistentMultipleTabManager 
+  memoryLocalCache 
 } from 'firebase/firestore';
-import { getAuth, setPersistence, inMemoryPersistence } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
-// Replace with your real Firebase config from the console
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDU9_wAnqF7ya5IG48pD4-KBqvISux3DjA",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "qrpass-4f170.firebaseapp.com",
@@ -18,16 +16,18 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:885772853221:web:82476983831c509380190c"
 };
 
-// Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// 1. Force Firestore to use Memory Cache only (Bypasses corrupted IndexedDB)
 const db = initializeFirestore(app, {
   localCache: memoryLocalCache()
 });
 
-// 2. Allow Auth to use default browser persistence (so refreshes work)
 const auth = getAuth(app);
+
+// Explicitly set persistence to LOCAL for reliable PWA sessions
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence);
+}
 
 const storage = getStorage(app);
 
