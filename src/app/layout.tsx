@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   title: "qrPass | Digital Identity",
   description: "Secure, professional digital business cards.",
   manifest: "/manifest.json",
+  icons: {
+    apple: "/icon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
