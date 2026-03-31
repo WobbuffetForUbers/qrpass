@@ -86,6 +86,8 @@ export interface UserProfile {
   company?: string;
   phone?: string;
   email?: string;
+  linkedinUrl?: string;
+  substackUrl?: string;
   avatarUrl?: string;
   bookingUrl?: string;
   cvHighlights?: CVHighlight[];

@@ -386,6 +386,17 @@ export default function Dashboard() {
                       <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Direct Email</label><input type="email" value={profile.email || ""} onChange={(e) => setProfile({...profile, email: e.target.value})} className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
                       <div className="space-y-1"><label className="text-[10px] font-black uppercase text-gray-400">Meeting Link</label><input type="text" value={profile.bookingUrl || ""} onChange={(e) => setProfile({...profile, bookingUrl: e.target.value})} placeholder="Calendly/Zoom link" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm" /></div>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-gray-400">LinkedIn Profile</label>
+                        <input type="text" value={profile.linkedinUrl || ""} onChange={(e) => setProfile({...profile, linkedinUrl: e.target.value})} placeholder="linkedin.com/in/username" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-gray-400">Substack URL</label>
+                        <input type="text" value={profile.substackUrl || ""} onChange={(e) => setProfile({...profile, substackUrl: e.target.value})} placeholder="username.substack.com" className="w-full px-4 py-3 bg-[#F8F9FA] border border-[#E1E3E5] rounded-lg font-bold text-sm focus:outline-none" />
+                      </div>
+                    </div>
                   </div>
                 </section>
 
