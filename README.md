@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# qrPass: Digital Identity Ecosystem (Web Profile & CRM)
 
-## Getting Started
+A high-performance "Digital Identity" platform built with Next.js, featuring a public-facing virtual business card and a private CRM for connection management.
 
-First, run the development server:
+## 🚀 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+*   **Virtual Business Card:** Responsive profile with integrated vCard generation and LinkedIn/Substack support.
+*   **Dual-View Interface:** Smooth manual and orientation-based transitions between a vertical profile and a horizontal business card.
+*   **Professional CV Engine:** Collapsible, standardized sections for Core Achievements, Clinical Research (PubMed/DOI), and Technical Projects.
+*   **Clinical Integration Portfolio:** Dedicated QI/PDSA project tracking for healthcare professionals.
+*   **Activity Ledger & CRM:** Automated "Ghost Scans" and handshake logging to track interactions and manage connection intelligence.
+*   **Custom Branding:** Premium themes (Minimal, Bold, Midnight) and selectable typography.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📅 Recent Updates (March 2026)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🧩 Feature: Clinical Integration Portfolio
+*   **Dashboard Integration:** Added a new management section for QI (Quality Improvement) projects.
+*   **Data Structure:** Implemented support for Title, Problem Statement, Intervention (PDSA), Metric, and Result/Outcome.
+*   **Live Rendering:** Real-time synchronization between the dashboard and the public profile.
 
-## Learn More
+### 🎨 UI: Standardized & Collapsible CV
+*   **Architecture:** Refactored all CV-related sections into a unified `<details>` system.
+*   **UX Improvement:** Drastically reduced vertical height on mobile by making Core Achievements and Portfolios collapsible.
+*   **Consistency:** Standardized padding, typography, and spacing across all professional experience blocks.
 
-To learn more about Next.js, take a look at the following resources:
+### 🌐 Social: LinkedIn & Substack Integration
+*   **Identity Expansion:** Added dedicated data fields for LinkedIn and Substack URLs.
+*   **Branded Buttons:** High-visibility social graph buttons added to the primary CTA row.
+*   **vCard Support:** Integrated social profiles into the downloadable contact card.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 📱 Interface: Advanced View Transition
+*   **Refactor:** Migrated profile rendering to a `ProfileView` client component for enhanced interactivity.
+*   **Manual Toggle:** Added a floating action button to manually switch between Vertical and Horizontal views on any device.
+*   **Orientation Intelligence:** Fixed overlapping logic in landscape mode to ensure the business card correctly swaps with the profile view.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🛠 Tech Stack
+*   **Framework:** Next.js (App Router, TypeScript)
+*   **Styling:** Tailwind CSS
+*   **Backend:** Firebase (Firestore, Auth, Storage)
+*   **API Integrations:** GitHub (Repos), PubMed (E-utils), CrossRef (DOI)
+*   **State Management:** React Hooks + Firestore Real-time Sync
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚦 Getting Started
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1.  **Install dependencies:** `npm install`
+2.  **Run development server:** `npm run dev`
+3.  **Build for production:** `npm run build`
