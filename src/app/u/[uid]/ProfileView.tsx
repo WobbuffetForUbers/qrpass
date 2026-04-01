@@ -18,7 +18,7 @@ interface ProfileViewProps {
 }
 
 export default function ProfileView({ userData, repos, allArticles, actualUid, publicProfileUrl }: ProfileViewProps) {
-  const [showHorizontal, setShowHorizontal] = useState(false);
+  const [isSwapped, setIsSwapped] = useState(false);
 
   const isPremium = userData.isPremium === true;
   const theme: DesignPrefs = isPremium && userData.designPrefs
@@ -62,32 +62,21 @@ export default function ProfileView({ userData, repos, allArticles, actualUid, p
 
       {/* Floating Toggle Button */}
       <button 
-        onClick={() => setShowHorizontal(!showHorizontal)}
+        onClick={() => setIsSwapped(!isSwapped)}
         className="fixed bottom-6 right-6 z-[600] w-14 h-14 rounded-full bg-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-gray-100"
         title="Toggle Card View"
         style={{ color: theme.accentColor }}
       >
-        <svg className={`w-6 h-6 transition-transform duration-500 ${showHorizontal ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-6 h-6 transition-transform duration-500 ${isSwapped ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16m-7 6h7" />
         </svg>
       </button>
 
       {/* HORIZONTAL MODE OVERLAY (TRADITIONAL BUSINESS CARD) */}
       <div 
-        className={`${showHorizontal ? 'flex' : 'hidden landscape:flex'} fixed inset-0 z-[500] items-center justify-center p-6 sm:p-12 animate-in fade-in duration-500`} 
+        className={`${isSwapped ? 'flex portrait:flex' : 'hidden landscape:flex'} fixed inset-0 z-[500] items-center justify-center p-6 sm:p-12 animate-in fade-in duration-500`} 
         style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.95)' : 'rgba(240,240,240,0.95)' }}
       >
-        {/* Close Button (only visible if forced horizontal) */}
-        {showHorizontal && (
-          <button 
-            onClick={() => setShowHorizontal(false)}
-            className="absolute top-8 right-8 text-black opacity-40 hover:opacity-100 transition-opacity"
-            style={{ color: isDark ? '#FFF' : '#000' }}
-          >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        )}
-
         <div 
           className="w-full max-w-[800px] aspect-[1.75/1] bg-white rounded-xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden flex relative group animate-in zoom-in-95 duration-500"
           style={{ backgroundColor: isDark ? '#111' : '#FFF' }}
@@ -187,7 +176,7 @@ export default function ProfileView({ userData, repos, allArticles, actualUid, p
       </div>
 
       {/* PORTRAIT MODE (Normal Content) */}
-      <div className="max-w-3xl w-full mt-4 sm:mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out landscape:hidden p-4 sm:p-12">
+      <div className={`max-w-3xl w-full mt-4 sm:mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out p-4 sm:p-12 ${isSwapped ? 'landscape:block' : 'landscape:hidden'}`}>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
           <div className="flex-shrink-0">
             <ProfileQR uid={actualUid} slug={userData.slug} avatarUrl={userData.avatarUrl} size={180} />
